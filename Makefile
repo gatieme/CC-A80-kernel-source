@@ -2,7 +2,7 @@ all	: github
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"更新了内核 Makefile, 设置了 arch/arm/configs/kernel_defconfig..."
+GITHUB_COMMIT	:=	"更新了arch/arm/kernel/topology.c..."
 
 github	:
 	git pull

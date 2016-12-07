@@ -26,14 +26,18 @@
 #include <asm/smp_plat.h>
 #include <asm/topology.h>
 
-/*
- * cpu power scale management
- */
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //////  [BEGIN] add by gatieme(ChengJean) @ 2012-12-07 19:10 for HMP_ENHANCEMENT
 ////////////////////////////////////////////////////////////////////////////////
+
+/*  add by gatieme(ChengJean) @ 2016-12-08 00:19 */
+#ifdef CONFIG_CPU_POWER_MANAGEMENT
+/*
+ * cpu power scale management
+ */
+
 /*
  * cpu power table
  * This per cpu data structure describes the relative capacity of each core.
@@ -46,6 +50,24 @@
  * during this sequence.
  */
 static DEFINE_PER_CPU(unsigned long, cpu_scale);
+unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu)
+{
+    return per_cpu(cpu_scale, cpu);
+}
+
+static void set_power_scale(unsigned int cpu, unsigned long power)
+{
+    per_cpu(cpu_scale, cpu) = power;
+}
+#else
+unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu){return 0; }
+static void set_power_scale(unsigned int cpu, unsigned long power){return ; }
+#endif  /*  CONFIG_CPU_POWER_MANAGEMENT */
+
+
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT /*ifnot*/
+
+
 
 /* when CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY is in use, a new measure of
  * compute capacity is available. This is limited to a maximum of 1024 and
@@ -79,35 +101,32 @@ static DEFINE_PER_CPU(unsigned long, invariant_cpu_capacity);
 static DEFINE_PER_CPU(unsigned long, prescaled_cpu_capacity);
 #endif /* CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY */
 
-/*
-//static int frequency_invariant_power_enabled = 1;
 
-// >0=1, <=0=0
+// may by another CONFIG START
+static int frequency_invariant_power_enabled = 1;
+/* >0=1, <=0=0  */
 void arch_set_invariant_power_enabled(int val)
 {
-	if(val>0)
-		frequency_invariant_power_enabled = 1;
-	else
-		frequency_invariant_power_enabled = 0;
+    if(val>0)
+        frequency_invariant_power_enabled = 1;
+    else
+        frequency_invariant_power_enabled = 0;
 }
 
 int arch_get_invariant_power_enabled(void)
 {
-	return frequency_invariant_power_enabled;
+    return frequency_invariant_power_enabled;
 }
+// may by another CONFIG END
 
-unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu)
-{
-	return per_cpu(cpu_scale, cpu);
-}
 
-static void set_power_scale(unsigned int cpu, unsigned long power)
-{
-	per_cpu(cpu_scale, cpu) = power;
-}
-*/
+
+#endif  /*  CONFIG_SCHED_HMP_ENHANCEMENT    ifnot*/
+
+
 
 #ifdef CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY
+
 unsigned long arch_get_cpu_capacity(int cpu)
 {
 	return per_cpu(invariant_cpu_capacity, cpu);
@@ -116,7 +135,7 @@ unsigned long arch_get_max_cpu_capacity(int cpu)
 {
 	return per_cpu(base_cpu_capacity, cpu);
 }
-#else
+#elif defined(CONFIG_CPU_POWER_MANAGEMENT)
 unsigned long arch_get_cpu_capacity(int cpu)
 {
 	return per_cpu(cpu_scale, cpu);
@@ -125,20 +144,13 @@ unsigned long arch_get_max_cpu_capacity(int cpu)
 {
 	return per_cpu(cpu_scale, cpu);
 }
+
 #endif /* CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY */
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////  [END] add by gatieme(ChengJean) @ 2012-12-07 19:05 for HMP_ENHANCEMENT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu)
-{
-	return per_cpu(cpu_scale, cpu);
-}
 
-static void set_power_scale(unsigned int cpu, unsigned long power)
-{
-	per_cpu(cpu_scale, cpu) = power;
-}
 
 #ifdef CONFIG_OF
 struct cpu_efficiency {
@@ -170,10 +182,10 @@ struct cpu_capacity {
 struct cpu_capacity *cpu_capacity;
 
 unsigned long middle_capacity = 1;
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+//#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 unsigned long min_capacity = (unsigned long)(-1);
 unsigned long max_capacity = 0;
-#endif	/*	CONFIG_SCHED_HMP_ENHANCEMENT	*/
+//#endif	/*	CONFIG_SCHED_HMP_ENHANCEMENT	*/
 
 
 /*
@@ -188,8 +200,8 @@ static void __init parse_dt_topology(void)
 {
 	struct cpu_efficiency *cpu_eff;
 	struct device_node *cn = NULL;
-	unsigned long min_capacity = (unsigned long)(-1);
-	unsigned long max_capacity = 0;
+	//unsigned long min_capacity = (unsigned long)(-1);
+	//unsigned long max_capacity = 0;
 	unsigned long capacity = 0;
 	int alloc_size, cpu = 0;
 
@@ -258,6 +270,7 @@ static void __init parse_dt_topology(void)
 
 }
 
+#ifdef CONFIG_CPU_POWER_MANAGEMENT
 /*
  * Look for a customed capacity of a CPU in the cpu_capacity table during the
  * boot. The update of all CPUs is in O(n^2) for heteregeneous system but the
@@ -284,11 +297,17 @@ void update_cpu_power(unsigned int cpu, unsigned long hwid)
 	printk(KERN_INFO "CPU%u: update cpu_power %lu\n",
 		cpu, arch_scale_freq_power(NULL, cpu));
 }
+//#else
+//static inline void update_cpu_power(unsigned int cpuid, unsigned int mpidr) {}
+#endif /*   CONFIG_CPU_POWER_MANAGEMENT */
 
-#else
+#else   /*  CONFIG_OF */
 static inline void parse_dt_topology(void) {}
 static inline void update_cpu_power(unsigned int cpuid, unsigned int mpidr) {}
-#endif
+#endif  /*  CONFIG_OF */
+
+
+ 
 
  /*
  * cpu topology table
@@ -373,9 +392,9 @@ void store_cpu_topology(unsigned int cpuid)
 	}
 
 	update_siblings_masks(cpuid);
-
+#if defined(CONFIG_CPU_POWER_MANAGEMENT) && defined(CONFIG_OF)
 	update_cpu_power(cpuid, mpidr & MPIDR_HWID_BITMASK);
-
+#endif
 	printk(KERN_INFO "CPU%u: thread %d, cpu %d, socket %d, mpidr %x\n",
 		cpuid, cpu_topology[cpuid].thread_id,
 		cpu_topology[cpuid].core_id,
@@ -439,9 +458,10 @@ static bool is_little_cpu(struct device_node *cn)
 void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 					struct cpumask *slow)
 {
-	struct device_node *cn = NULL;
-	int cpu;
-
+#ifdef CONFIG_OF
+       struct device_node *cn = NULL;
+       int cpu;
+#endif
 	cpumask_clear(fast);
 	cpumask_clear(slow);
 
@@ -459,6 +479,7 @@ void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 		return;
 	}
 
+#ifdef CONFIG_OF
 	/*
 	 * Else, parse device tree for little cores.
      *
@@ -497,7 +518,7 @@ void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 		else
 			cpumask_set_cpu(cpu, fast);
 	}
-
+#endif  /*  CONFIG_OF */
 	if (!cpumask_empty(fast) && !cpumask_empty(slow))
 		return;
 
@@ -582,8 +603,9 @@ void __init init_cpu_topology(void)
 		set_power_scale(cpu, SCHED_POWER_SCALE);
 	}
 	smp_wmb();
-
+//#ifdef CONFIG_OF
 	parse_dt_topology();
+//#endif
 }
 
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
