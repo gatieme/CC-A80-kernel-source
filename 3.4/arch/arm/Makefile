@@ -26,7 +26,7 @@ KBUILD_CFLAGS	+= $(call cc-option,-fno-dwarf2-cfi-asm)
 
 # Do not use arch/arm/defconfig - it's always outdated.
 # Select a platform tht is kept up-to-date
-KBUILD_DEFCONFIG := versatile_defconfig
+KBUILD_DEFCONFIG := kernel_defconfig
 
 # defines filename extension depending memory management type.
 ifeq ($(CONFIG_MMU),)
@@ -309,7 +309,7 @@ define archhelp
   echo  '  Image         - Uncompressed kernel image (arch/$(ARCH)/boot/Image)'
   echo  '* xipImage      - XIP kernel image, if configured (arch/$(ARCH)/boot/xipImage)'
   echo  '  uImage        - U-Boot wrapped zImage'
-  echo  '  bootpImage    - Combined zImage and initial RAM disk' 
+  echo  '  bootpImage    - Combined zImage and initial RAM disk'
   echo  '                  (supply initrd image via make variable INITRD=<path>)'
   echo  '  dtbs          - Build device tree blobs for enabled boards'
   echo  '  install       - Install uncompressed kernel'
