@@ -2,7 +2,7 @@ all	: github
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"更新了HMP的 stop_machine, trace, core.c 和 sched.h..."
+GITHUB_COMMIT	:=	"移植 hmpcb 调度器到kernel/sched/fair.c..."
 
 github	:
 	git pull

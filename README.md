@@ -1,8 +1,11 @@
 big.LITTLE
 =======
 
+https://github.com/gatieme/CC-A80-kernel-source/blob/master/3.4/kernel/sched/fair.c
 
+https://github.com/gatieme/big.LITTLE/blob/master/3.10/kernel/sched/fair.c
 
+https://github.com/meizuosc/m681/blob/master/kernel/sched/fair.c
 
 
 #1	CONFIG_OF 宏的问题
@@ -77,3 +80,27 @@ static DEFINE_PER_CPU(unsigned long, cpu_scale);
 ```cpp
 /home/gatieme/Work/Arm/Kernel/3.4/GitHub/3.4/scripts/mksysmap: line 44: ~/Work/Arm/Board/cubieboard/cc-a80/cc-a80-linux-sdk/tools/crosscompiler/bin/arm-linux-gnueabi-nm: No such file or directory
 ```
+
+#6 runnable_load_avg
+-------
+
+cpu_rq(cpu)->load.weight;
+均被修改为
+cpu_rq(cpu)->cfs.runnable_load_avg;
+
+tg_load_down
+task_h_load
+task_h_load
+
+#7  lb_env中定义的问题
+-------
+
+
+#8
+自打6930-7467行开始
+update_sg_lb_stats函数参数变换
+update_sd_pick_busiest
+update_sd_lb_stats
+check_asym_packing
+calculate_imbalance
+find_busiest_queue
