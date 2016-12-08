@@ -1,6 +1,4 @@
-/*
- * kernel/stop_machine.c
- *
+/* * kernel/stop_machine.c *
  * Copyright (C) 2008, 2005	IBM Corporation.
  * Copyright (C) 2008, 2005	Rusty Russell rusty@rustcorp.com.au
  * Copyright (C) 2010		SUSE Linux Products GmbH
@@ -41,6 +39,9 @@ struct cpu_stopper {
 };
 
 static DEFINE_PER_CPU(struct cpu_stopper, cpu_stopper);
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+static DEFINE_PER_CPU(struct task_struct *, cpu_stopper_task);
+#endif  /*       #ifdef CONFIG_SCHED_HMP_ENHANCEMENT    */
 static bool stop_machine_initialized = false;
 
 static void cpu_stop_init_done(struct cpu_stop_done *done, unsigned int nr_todo)
@@ -523,6 +524,55 @@ int stop_machine(int (*fn)(void *), void *data, const struct cpumask *cpus)
 	return ret;
 }
 EXPORT_SYMBOL_GPL(stop_machine);
+
+#ifdef CONFIG_HMP_PACK_STOP_MACHINE     /*      && defined(CONFIG_SCHED_HMP_ENHANCEMENT)        */
+#ifdef CONFIG_SCHED_HMP
+#warning "you have used STOP_MACHINE(stop_one_cpu_dispatch) in CONFIG_SCHED_HMP which may have much BUGS..."
+#warning "Missing cpu_stopper_task in STOP_MACHINE..."
+#endif  /*      #ifdef CONFIG_SCHED_HMP */
+
+int cpu_park(int cpu)
+{
+        struct cpu_stopper *stopper = &per_cpu(cpu_stopper, cpu);
+
+        return !((stopper)?stopper->enabled:0);
+}
+EXPORT_SYMBOL_GPL(cpu_park);
+
+/* queue @work to @stopper.  if offline, @work is completed immediately */
+static int __cpu_stop_dispatch_work(unsigned int cpu, struct cpu_stop_work *work)
+{
+        struct cpu_stopper *stopper = &per_cpu(cpu_stopper, cpu);
+//        struct task_struct *p = per_cpu(cpu_stopper_task, cpu);
+
+        unsigned long flags;
+        int ret = 0;
+
+        spin_lock_irqsave(&stopper->lock, flags);
+
+        if (stopper->enabled) {
+                list_add_tail(&work->list, &stopper->works);
+                wake_up_process(p);
+        } else {
+                cpu_stop_signal_done(work->done, false);
+                ret = 1;
+        }
+
+        spin_unlock_irqrestore(&stopper->lock, flags);
+
+        return ret;
+}
+
+int stop_one_cpu_dispatch(unsigned int cpu, cpu_stop_fn_t fn, void *arg,
+                                struct cpu_stop_work *work_buf)
+{
+        *work_buf = (struct cpu_stop_work){ .fn = fn, .arg = arg, };
+        return __cpu_stop_dispatch_work(cpu, work_buf);
+}
+EXPORT_SYMBOL_GPL(stop_one_cpu_dispatch);
+
+#endif  /*      #ifdef CONFIG_HMP_PACK_STOP_MACHINE     &&      defined(CONFIG_SCHED_HMP_ENHANCEMENT)        */
+
 
 /**
  * stop_machine_from_inactive_cpu - stop_machine() from inactive CPU

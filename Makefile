@@ -2,7 +2,7 @@ all	: github
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"更新了arch/arm/kernel/topology.c..."
+GITHUB_COMMIT	:=	"更新了HMP的 stop_machine, trace, core.c 和 sched.h..."
 
 github	:
 	git pull

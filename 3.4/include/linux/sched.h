@@ -864,6 +864,11 @@ enum cpu_idle_type {
 #define SD_PREFER_SIBLING	0x1000	/* Prefer to place tasks in a sibling domain */
 #define SD_OVERLAP		0x2000	/* sched_domains of this level overlap */
 
+/*      add by gatieme(ChengJean) @ 2016-12-08  */
+#ifdef CONFIG_HMP_PACK_SMALL_TASK
+#define SD_SHARE_POWERLINE      0x0100  /* Domain members share power domain */
+#endif /* CONFIG_HMP_PACK_SMALL_TASK */
+
 enum powersavings_balance_level {
 	POWERSAVINGS_BALANCE_NONE = 0,  /* No power saving load balance */
 	POWERSAVINGS_BALANCE_BASIC,	/* Fill one thread/core/package
@@ -1075,7 +1080,37 @@ struct hmp_domain {
 	struct cpumask possible_cpus;
 	struct list_head hmp_domains;
 };
+
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+
+//#ifdef CONFIG_HMP_DYNAMIC_THRESHOLD
+struct clb_stats {
+        int ncpu;                     /* The number of CPU */
+        int ntask;                    /* The number of tasks */
+        int load_avg;                 /* Arithmetic average of task load ratio */
+        int cpu_capacity;             /* Current CPU capacity */
+        int cpu_power;                /* Max CPU capacity */
+        int acap;                     /* Available CPU capacity */
+        int scaled_acap;              /* Scaled available CPU capacity */
+        int scaled_atask;             /* Scaled available task */
+        int threshold;                /* Dynamic threshold */
+#ifdef CONFIG_SCHED_HMP_PRIO_FILTER
+        int nr_normal_prio_task;      /* The number of normal-prio tasks */
+        int nr_dequeuing_low_prio;    /* The number of dequeuing low-prio tasks */
+#endif
+};
+//#endif  /*      #ifdef CONFIG_HMP_DYNAMIC_THRESHOLD     */
+
+#ifdef CONFIG_HMP_TRACER
+struct hmp_statisic {
+        unsigned int nr_force_up;   /* The number of task force up-migration */
+        unsigned int nr_force_down; /* The number of task force down-migration */
+};
+#endif /* CONFIG_HMP_TRACER */
+#endif /* CONFIG_SCHED_HMP_ENHANCEMENT */
+
 #endif /* CONFIG_SCHED_HMP */
+
 #else /* CONFIG_SMP */
 
 struct sched_domain_attr;
@@ -1188,13 +1223,39 @@ struct sched_avg {
 	u64 last_runnable_update;
 	s64 decay_count;
 	unsigned long load_avg_contrib;
-    unsigned long load_avg_ratio;    
+        unsigned long load_avg_ratio;
 #ifdef CONFIG_SCHED_HMP
-    u64 hmp_last_up_migration;
-    u64 hmp_last_down_migration;
-#endif
-    u32 usage_avg_sum;	
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+        unsigned long pending_load;
+        u32 nr_pending;
+#ifdef CONFIG_SCHED_HMP_PRIO_FILTER
+        u32 nr_dequeuing_low_prio;
+        u32 nr_normal_prio;
+#endif  /*      CONFIG_SCHED_HMP_PRIO_FILTER    */
+#endif  /*      CONFIG_SCHED_HMP_ENHANCEMENT    */
+        u64 hmp_last_up_migration;
+        u64 hmp_last_down_migration;
+#endif  /* CONFIG_SCHED_HMP                     */
+        u32 usage_avg_sum;
 };
+
+#ifdef CONFIG_SCHED_HMP
+/*
+ * We want to avoid boosting any processes forked from init (PID 1)
+ * and kthreadd (assumed to be PID 2).
+ *
+ * 当 HMP 负载调度器处理新创建的进程时
+ * 为了避免处理 init(PID 1) 和 kthreadd(PID 2) 直接派生的进程
+ * 因此跳过此类进程的处理
+ *
+ * 调用关系
+ * int cpu = p->sched_class->select_task_rq(p, sd_flags, wake_flags);
+ *      ->  select_task_rq_fair( )
+ *              ->  hmp_task_should_forkboost( )
+ * */
+#define hmp_task_should_forkboost(task) ((task->parent && task->parent->pid > 2))
+#endif  /*      #ifdef CONFIG_SCHED_HMP */
+
 
 #ifdef CONFIG_SCHEDSTATS
 struct sched_statistics {
@@ -1399,9 +1460,9 @@ struct task_struct {
 	unsigned long stack_canary;
 #endif
 
-	/* 
+	/*
 	 * pointers to (original) parent process, youngest child, younger sibling,
-	 * older sibling, respectively.  (p->father can be replaced with 
+	 * older sibling, respectively.  (p->father can be replaced with
 	 * p->real_parent->pid)
 	 */
 	struct task_struct __rcu *real_parent; /* real parent process */

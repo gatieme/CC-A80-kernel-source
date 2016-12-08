@@ -1487,8 +1487,16 @@ static void sched_ttwu_pending(void)
 
 void scheduler_ipi(void)
 {
-	if (llist_empty(&this_rq()->wake_list) && !got_nohz_idle_kick())
-		return;
+	if (llist_empty(&this_rq()->wake_list)
+                && !got_nohz_idle_kick()
+#ifdef CONFIG_NO_HZ_COMMON
+                && !tick_nohz_full_cpu(smp_processor_id())
+#endif  /*      CONFIG_NO_HZ_COMMON     */
+#ifdef  CONFIG_HMP_DELAY_UP_MIRGATION   /*      && defined(CONFIG_SCHED_HMP)    */
+                && !this_rq()->wake_for_idle_pull
+#endif
+                )
+                return;
 
 	/*
 	 * Not all reschedule IPI handlers call irq_enter/irq_exit, since
@@ -1513,6 +1521,10 @@ void scheduler_ipi(void)
 		this_rq()->idle_balance = 1;
 		raise_softirq_irqoff(SCHED_SOFTIRQ);
 	}
+#ifdef  CONFIG_HMP_DELAY_UP_MIRGATION   /*      && defined(CONFIG_SCHED_HMP)    */
+        else if (unlikely(this_rq()->wake_for_idle_pull))
+                raise_softirq_irqoff(SCHED_SOFTIRQ);
+#endif
 	irq_exit();
 }
 
@@ -1739,7 +1751,7 @@ static void __sched_fork(struct task_struct *p)
 		p->se.avg.runnable_avg_sum = LOAD_AVG_MAX;
 		p->se.avg.usage_avg_sum = LOAD_AVG_MAX;
 	}
-#endif    
+#endif
 #endif
 #ifdef CONFIG_SCHEDSTATS
 	memset(&p->se.statistics, 0, sizeof(p->se.statistics));
@@ -4264,11 +4276,13 @@ __setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
 	if (rt_prio(p->prio)) {
 		p->sched_class = &rt_sched_class;
 #ifdef CONFIG_SCHED_HMP
-			if (cpumask_equal(&p->cpus_allowed, cpu_all_mask)) {
-				p->rt.nr_cpus_allowed =
-					cpumask_weight(&hmp_slow_cpu_mask);
-			do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
-			}
+                if(!cpumask_empty(&hmp_slow_cpu_mask)) {
+		        if (cpumask_equal(&p->cpus_allowed, cpu_all_mask)) {
+			        p->rt.nr_cpus_allowed =
+			                cpumask_weight(&hmp_slow_cpu_mask);
+		                do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
+		        }
+                }
 #endif
 	}
 	else

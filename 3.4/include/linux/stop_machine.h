@@ -33,6 +33,12 @@ void stop_one_cpu_nowait(unsigned int cpu, cpu_stop_fn_t fn, void *arg,
 int stop_cpus(const struct cpumask *cpumask, cpu_stop_fn_t fn, void *arg);
 int try_stop_cpus(const struct cpumask *cpumask, cpu_stop_fn_t fn, void *arg);
 
+#ifdef CONFIG_HMP_PACK_STOP_MACHINE     /*      && defined(CONFIG_SCHED_HMP_ENHANCEMENT)                */
+int cpu_park(int cpu);
+int stop_one_cpu_dispatch(unsigned int cpu, cpu_stop_fn_t fn, void *arg,
+                                        struct cpu_stop_work *work_buf);
+#endif  /*      #ifdef CONFIG_HMP_PACK_STOP_MACHINE     && defined(CONFIG_SCHED_HMP_ENHANCEMENT)        */
+
 #else	/* CONFIG_SMP */
 
 #include <linux/workqueue.h>

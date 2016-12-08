@@ -27,7 +27,7 @@ modules.builtin
 Module.symvers
 Module.markers
 *.elf
-*.bin
+.bin
 *.gz
 *.bz2
 *.lzma

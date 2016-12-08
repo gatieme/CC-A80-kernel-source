@@ -27,6 +27,13 @@
 #include <linux/delay.h>
 #include <mach/platform.h>
 
+/*      add by gatieme(ChengJean)
+ *      if we use CONFIG_OF we will missing some function int this version kernel
+ *      */
+#ifdef CONFIG_OF
+#undef CONFIG_OF
+#endif
+
 #define TIMER_CTL_REG		0x00
 #define TIMER_CTL_ENABLE		(1 << 0)
 #define TIMER_IRQ_ST_REG	0x04
@@ -153,6 +160,7 @@ void __init sunxi_timer_init(void)
 	int ret, irq;
 	u32 val;
 
+//#if 0   /*      to fix the of_clk_get--error: implicit declaration of function ‘of_clk_get’     */
 #ifdef CONFIG_OF
 	node = of_find_matching_node(NULL, sunxi_timer_dt_ids);
 	if (!node)
@@ -169,7 +177,9 @@ void __init sunxi_timer_init(void)
 	clk = of_clk_get(node, 0);
 	if (IS_ERR(clk))
 		panic("Can't get timer clock");
-
+        /* error: implicit declaration of function ‘of_clk_get’
+         * [-Werror=implicit-function-declaration]
+         * */
 	rate = clk_get_rate(clk);
 #else
 	timer_base = (void __iomem *)SUNXI_TIMER_VBASE;
