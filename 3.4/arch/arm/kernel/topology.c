@@ -33,7 +33,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /*  add by gatieme(ChengJean) @ 2016-12-08 00:19 */
-#ifdef CONFIG_CPU_POWER_MANAGEMENT
+//#ifdef CONFIG_CPU_POWER_MANAGEMENT
 /*
  * cpu power scale management
  */
@@ -59,10 +59,10 @@ static void set_power_scale(unsigned int cpu, unsigned long power)
 {
     per_cpu(cpu_scale, cpu) = power;
 }
-#else
-unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu){return 0; }
-static void set_power_scale(unsigned int cpu, unsigned long power){return ; }
-#endif  /*  CONFIG_CPU_POWER_MANAGEMENT */
+//#else
+//unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu){return 0; }
+//static void set_power_scale(unsigned int cpu, unsigned long power){return ; }
+//#endif  /*  CONFIG_CPU_POWER_MANAGEMENT */
 
 
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT /*ifnot*/
@@ -307,7 +307,7 @@ static inline void update_cpu_power(unsigned int cpuid, unsigned int mpidr) {}
 #endif  /*  CONFIG_OF */
 
 
- 
+
 
  /*
  * cpu topology table

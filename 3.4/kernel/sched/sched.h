@@ -225,6 +225,9 @@ struct cfs_rq {
 #endif
 
 #ifdef CONFIG_SMP
+#ifdef CONFIG_SCHED_HMP /*      add by gatieme for per runqueue's avg tracking  */
+                struct sched_avg avg;
+#endif  /*      CONFIG_SCHED_HMP_ENHANCEMENT    */
 /*
  * Load-tracking only depends on SMP, FAIR_GROUP_SCHED dependency below may be
  * removed when useful for applications beyond shares distribution (e.g.
@@ -243,7 +246,7 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 /* These always depend on CONFIG_FAIR_GROUP_SCHED */
 #ifdef CONFIG_FAIR_GROUP_SCHED
-    u32 tg_runnable_contrib, tg_usage_contrib;
+        u32 tg_runnable_contrib, tg_usage_contrib;
 	u64 tg_load_contrib;
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 
@@ -413,7 +416,9 @@ struct rq {
 	struct sched_domain *sd;
 
 	unsigned long cpu_power;
-
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+        unsigned long cpu_power_orig;
+#endif
 	unsigned char idle_balance;
 	/* For active balancing */
 	int post_schedule;
@@ -421,8 +426,11 @@ struct rq {
 	int push_cpu;
 	struct cpu_stop_work active_balance_work;
 #ifdef CONFIG_SCHED_HMP
-	struct task_struct *migrate_task;
-#endif
+        struct task_struct *migrate_task;       /*  当前 CPU 运行队列 rq 上, 待迁移的进程   */
+#ifdef  CONFIG_HMP_DELAY_UP_MIGRATION
+        int wake_for_idle_pull;                 /*  当 发生 向上迁移(up migrate) 时, 通知大核 CPU 苏醒wakeup执行迁移的标识  */
+#endif  /*      #ifdef  CONFIG_HMP_DELAY_UP_MIGRATION   */
+#endif  /*      #ifdef CONFIG_SCHED_HMP */
 	/* cpu of this runqueue: */
 	int cpu;
 	int online;
