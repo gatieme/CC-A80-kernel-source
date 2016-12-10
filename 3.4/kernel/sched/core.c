@@ -1489,7 +1489,7 @@ void scheduler_ipi(void)
 {
 	if (llist_empty(&this_rq()->wake_list)
                 && !got_nohz_idle_kick()
-#ifdef CONFIG_NO_HZ_COMMON
+#ifdef CONFIG_NO_HZ
                 && !tick_nohz_full_cpu(smp_processor_id())
 #endif  /*      CONFIG_NO_HZ_COMMON     */
 #ifdef  CONFIG_HMP_DELAY_UP_MIRGATION   /*      && defined(CONFIG_SCHED_HMP)    */
