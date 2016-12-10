@@ -1328,9 +1328,11 @@ void task_tick_numa(struct rq *rq, struct task_struct *curr)
 	}
 }
 #else
+#if 0
 static void task_tick_numa(struct rq *rq, struct task_struct *curr)
 {
 }
+#endif
 #endif /* CONFIG_NUMA_BALANCING add by gatieme(ChengJean) for CONFIG_SCHED_HMP_ENHANCEMENT */
 
 static void
@@ -1655,11 +1657,6 @@ static int nr_cpus_in_cluster(int cluster_id, bool exclusive_offline)
 #endif
 #endif /* CONFIG_MTK_SCHED_CMP */
 
-void sched_get_big_little_cpus(struct cpumask *big, struct cpumask *little)
-{
-	arch_get_big_little_cpus(big, little);
-}
-EXPORT_SYMBOL(sched_get_big_little_cpus);
 
 /*
  * generic entry point for cpu mask construction, dedicated for
@@ -1750,8 +1747,9 @@ static __always_inline int __update_entity_runnable_avg(u64 now,
 #endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
 
 	delta = now - sa->last_runnable_update;
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	lru = sa->last_runnable_update;
-
+#endif
 	/*
 	 * This should only happen when time goes backwards, which it
 	 * unfortunately does during sched clock init when we swap over to TSC.
@@ -2069,7 +2067,9 @@ static inline void subtract_blocked_load_contrib(struct cfs_rq *cfs_rq,
 #ifdef CONFIG_SCHED_HMP_PRIO_FILTER     /* add by gatieme(ChengJean) */
 unsigned int hmp_up_prio = NICE_TO_PRIO(CONFIG_SCHED_HMP_PRIO_FILTER_VAL);
 #endif
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+
+#ifdef CONFIG_SCHED_HMP
+//#ifdef CONFIG_SCHED_HMP_HANCEMENT
 /* Schedule entity */
 #define se_pid(se) ((se != NULL && entity_is_task(se)) ? \
                         container_of(se, struct task_struct, se)->pid : -1)
@@ -2084,6 +2084,7 @@ unsigned int hmp_up_prio = NICE_TO_PRIO(CONFIG_SCHED_HMP_PRIO_FILTER_VAL);
 #define cfs_nr_pending(cpu) cpu_rq(cpu)->cfs.avg.nr_pending
 #define cfs_length(cpu) cpu_rq(cpu)->cfs.h_nr_running
 #define rq_length(cpu) (cpu_rq(cpu)->nr_running + cfs_nr_pending(cpu))
+
 #ifdef CONFIG_SCHED_HMP_PRIO_FILTER
 #define task_low_priority(prio) ((prio >= hmp_up_prio)?1:0)
 #define cfs_nr_dequeuing_low_prio(cpu) \
@@ -2093,7 +2094,9 @@ unsigned int hmp_up_prio = NICE_TO_PRIO(CONFIG_SCHED_HMP_PRIO_FILTER_VAL);
 #else
 #define task_low_priority(prio) (0)
 #define cfs_reset_nr_dequeuing_low_prio(cpu)
+
 #endif /* CONFIG_SCHED_HMP_PRIO_FILTER */
+
 #endif /* CONFIG_SCHED_HMP_ENHANCEMENT */
 static inline u64 cfs_rq_clock_task(struct cfs_rq *cfs_rq);
 
@@ -2181,32 +2184,13 @@ static inline void update_entity_load_avg(struct sched_entity *se,
 	else
 		now = cfs_rq_clock_task(group_cfs_rq(se));
 
-    if (!__update_entity_runnable_avg(now, &se->avg, se->on_rq,
+        if (!__update_entity_runnable_avg(now, &se->avg, se->on_rq,
                        cfs_rq->curr == se, cpu)) {
-#if 0
-		if (entity_is_task(se)) {
-			ratio_delta = __update_task_entity_ratio(se);
-			if (update_cfs_rq) {
-				cpu = cfs_rq->rq->cpu;
-				cpu_rq(cpu)->cfs.avg.load_avg_ratio += ratio_delta;
-#ifdef CONFIG_HMP_TRACER
-				trace_sched_cfs_load_update(task_of(se), se_load(se), ratio_delta,
-							    cpu);
-#endif /* CONFIG_HMP_TRACER */
-			}
-
-			trace_sched_task_entity_avg(2, task_of(se), &se->avg);
-#ifdef CONFIG_MTK_SCHED_CMP_TGS
-			if (se->on_rq) {
-				update_tg_info(cfs_rq, se, ratio_delta);
-			}
-#endif
-		}
-#endif
  		return;
- }
+        }
 
 	contrib_delta = __update_entity_load_avg_contrib(se, &ratio_delta);
+
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	/* usage_avg_sum & load_avg_ratio are based on Linaro 12.11. */
 	if (entity_is_task(se)) {
@@ -2232,7 +2216,7 @@ static inline void update_entity_load_avg(struct sched_entity *se,
 			cpu_rq(cpu)->cfs.avg.load_avg_ratio += ratio_delta;
 			cpu_rq(cpu)->cfs.avg.load_avg_contrib += contrib_delta;
 #ifdef CONFIG_HMP_TRACER
-			trace_sched_cfs_load_update(task_of(se), se_load(se), ratio_delta, cpu);
+		        trace_sched_cfs_load_update(task_of(se), se_load(se), ratio_delta, cpu);
 #endif /* CONFIG_HMP_TRACER */
 #ifdef CONFIG_MTK_SCHED_CMP_TGS
 			update_tg_info(cfs_rq, se, ratio_delta);
@@ -2298,9 +2282,7 @@ static inline void enqueue_entity_load_avg(struct cfs_rq *cfs_rq,
 						  struct sched_entity *se,
 						  int wakeup)
 {
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	int cpu = cfs_rq->rq->cpu;
-#endif
 	/*
 	 * We track migrations using entity decay_count <= 0, on a wake-up
 	 * migration we use a negative decay count to track the remote decays
@@ -3678,7 +3660,7 @@ static inline void hrtick_update(struct rq *rq)
 }
 #endif
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_MTK_SCHED_CMP)
+#if defined(CONFIG_SCHED_HMP_HANCEMENT) || defined(CONFIG_MTK_SCHED_CMP)
 
 /* CPU cluster statistics for task migration control */
 #define HMP_GB (0x1000)
@@ -3784,7 +3766,7 @@ static void collect_cluster_stats(struct clb_stats *clbs, struct cpumask *cluste
 }
 
 /* #define USE_HMP_DYNAMIC_THRESHOLD */
-#if defined(CONFIG_SCHED_HMP) && defined(USE_HMP_DYNAMIC_THRESHOLD)
+#if defined(CONFIG_SCHED_HMP_ENHANCEMENT) && defined(USE_HMP_DYNAMIC_THRESHOLD)
 static inline void hmp_dynamic_threshold(struct clb_env *clbenv);
 #endif
 
@@ -3875,7 +3857,7 @@ static void sched_update_clbstats(struct clb_env *clbenv)
 	collect_cluster_stats(&clbenv->lstats, &clbenv->lcpus, clbenv->ltarget);
 	adj_threshold(clbenv);
 }
-#endif /* #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_CMP) */
+#endif /* #if defined(CONFIG_SCHED_HMP_ENHANCEMENT) || defined(CONFIG_SCHED_CMP) */
 /*
  * The enqueue_task method is called before nr_running is
  * increased. Here we update the fair scheduling stats and
@@ -4063,10 +4045,12 @@ static unsigned long power_of(int cpu)
 	return cpu_rq(cpu)->cpu_power;
 }
 
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 static unsigned long power_orig_of(int cpu)
 {
 	return cpu_rq(cpu)->cpu_power_orig;
 }
+#endif
 static unsigned long cpu_avg_load_per_task(int cpu)
 {
 	struct rq *rq = cpu_rq(cpu);
@@ -5514,18 +5498,17 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 	int want_affine = 0;
 	int want_sd = 1;
 	int sync = wake_flags & WF_SYNC;
-#if defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_ENHANCEMENT)
-	int target_cpu = nr_cpu_ids;
-#endif
+#ifdef CONFIG_MTK_SCHED
+	int prefer_cpu;
 #ifdef CONFIG_MTK_SCHED_TRACERS
 	int policy = 0;
 #endif
-	int prefer_cpu;
+#endif
 #ifdef CONFIG_MTK_SCHED_CMP_PACK_SMALL_TASK
 	int buddy_cpu = per_cpu(sd_pack_buddy, cpu);
 #endif
 
-	if (p->rt.nr_cpus_allowed == 1)
+	if (p->rt.nr_cpus_allowed == 1) {
 #ifdef CONFIG_MTK_SCHED_TRACERS
 		trace_sched_select_task_rq(p, (LB_AFFINITY | prev_cpu), prev_cpu, prev_cpu);
 #endif
@@ -5631,7 +5614,7 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 #endif
 			        return new_cpu;
 		        }
-                }
+		}
 		/* failed to perform HMP fork balance, use normal balance */
 		if (new_cpu >= nr_cpu_ids)  /*maybe womething wrong*/
 			new_cpu = cpu;
@@ -5643,7 +5626,7 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 			want_affine = 1;
 		new_cpu = prev_cpu;
 	}
-#if CONFIG_MTK_SCHED
+#ifdef CONFIG_MTK_SCHED
 	prefer_cpu = mt_select_task_rq_fair(p, prev_cpu);
 	if (prefer_cpu < nr_cpu_ids) {
 		cpu = prefer_cpu;
@@ -6001,7 +5984,8 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	 * Batch and idle tasks do not preempt non-idle tasks (their preemption
 	 * is driven by the tick):
 	 */
-	if (unlikely(p->policy != SCHED_NORMAL)|| !sched_feat(WAKEUP_PREEMPTION)) /*maybesomething wrong*/
+	if (unlikely(p->policy != SCHED_NORMAL))
+                        //|| !sched_feat(WAKEUP_PREEMPTION)) /*maybesomething wrong*/
 		return;
 
 	find_matching_se(&se, &pse);
@@ -7392,8 +7376,9 @@ static void update_cpu_power(struct sched_domain *sd, int cpu)
 		power *= default_scale_freq_power(sd, cpu);
 
 	power >>= SCHED_POWER_SHIFT;
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	cpu_rq(cpu)->cpu_power_orig = power;
-
+#endif
 	power *= scale_rt_power(cpu);
 	power >>= SCHED_POWER_SHIFT;
 
@@ -8956,7 +8941,15 @@ static void nohz_idle_balance(int this_cpu, enum cpu_idle_type idle) { }
 #endif
 
 #ifdef CONFIG_SCHED_HMP
+
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+
+
+void sched_get_big_little_cpus(struct cpumask *big, struct cpumask *little)
+{
+	arch_get_big_little_cpus(big, little);
+}
+EXPORT_SYMBOL(sched_get_big_little_cpus);
 
 /*
  * Heterogenous Multi-Processor (HMP) - Declaration and Useful Macro
@@ -9463,12 +9456,15 @@ trace:
 out:
 	return check->result;
 }
+
+
 #else /* CONFIG_SCHED_HMP_ENHANCEMENT */
+
 /* Check if task should migrate to a faster cpu */
 static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_entity *se)
 {
 	struct task_struct *p = task_of(se);
-	struct cfs_rq *cfs_rq = &cpu_rq(cpu)->cfs;
+	//struct cfs_rq *cfs_rq = &cpu_rq(cpu)->cfs;
 	int temp_target_cpu;
 	u64 now;
 
@@ -9842,7 +9838,6 @@ out:
 
 static DEFINE_SPINLOCK(hmp_force_migration);
 
-static DEFINE_SPINLOCK(hmp_force_migration);
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 /*
  * Heterogenous Multi-Processor (HMP) Global Load Balance
@@ -10240,6 +10235,7 @@ done:
 	spin_unlock(&hmp_force_migration);
 	return force;
 }
+#endif  /*      CONFIG_SCHED_HMP_ENHANCEMENT    */
 #else
 static void hmp_force_up_migration(int this_cpu) { }
 #endif /* CONFIG_SCHED_HMP */
