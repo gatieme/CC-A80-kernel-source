@@ -1669,7 +1669,7 @@ config HMP_VARIABLE_SCALE
 
 config HMP_FREQUENCY_INVARIANT_SCALE
 	bool "(LINARO-HMP) Frequency-Invariant Tracked Load for HMP"
-	depends on SCHED_HMP && CPU_FREQ
+	depends on SCHED_HMP && CPU_FREQ #&& !(ARCH_SCALE_INVARIANT_CPU_CAPACITY)
 	help
 	  Scales the current load contribution in line with the frequency
 	  of the CPU that the task was executed on.
@@ -1713,7 +1713,7 @@ config HEVTASK_INTERFACE
 
 config ARCH_SCALE_INVARIANT_CPU_CAPACITY
        bool "(EXPERIMENTAL-HMP) Scale-Invariant CPU Compute Capacity Recording"
-       depends on CPU_FREQ
+       depends on SCHED_HMP && CPU_FREQ && !(HMP_FREQUENCY_INVARIANT_SCALE)
        help
          Provides a new measure of maximum and instantaneous CPU compute
          capacity, derived from a table of relative compute performance

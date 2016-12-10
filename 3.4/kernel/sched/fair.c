@@ -2064,12 +2064,56 @@ static inline void subtract_blocked_load_contrib(struct cfs_rq *cfs_rq,
 	else
 		cfs_rq->blocked_load_avg = 0;
 }
-#ifdef CONFIG_SCHED_HMP_PRIO_FILTER     /* add by gatieme(ChengJean) */
+//#ifdef CONFIG_SCHED_HMP_PRIO_FILTER     /* add by gatieme(ChengJean) */
+//unsigned int hmp_up_prio = NICE_TO_PRIO(CONFIG_SCHED_HMP_PRIO_FILTER_VAL);
+//#endif
+
+
+/*
+ * Migration thresholds should be in the range [0..1023]
+ * hmp_up_threshold: min. load required for migrating tasks to a faster cpu
+ * hmp_down_threshold: max. load allowed for tasks migrating to a slower cpu
+ *
+ * hmp_up_prio: Only up migrate task with high priority (<hmp_up_prio)
+ * hmp_next_up_threshold: Delay before next up migration (1024 ~= 1 ms)
+ * hmp_next_down_threshold: Delay before next down migration (1024 ~= 1 ms)
+ *
+ * Small Task Packing:
+ * We can choose to fill the littlest CPUs in an HMP system rather than
+ * the typical spreading mechanic. This behavior is controllable using
+ * two variables.
+ * hmp_packing_enabled: runtime control over pack/spread
+ * hmp_full_threshold: Consider a CPU with this much unweighted load full
+ */
+#ifdef CONFIG_SCHED_HMP_DCMP
+unsigned int hmp_up_threshold = 256;
+unsigned int hmp_down_threshold = 0;
+#else
+unsigned int hmp_up_threshold = 700;
+unsigned int hmp_down_threshold = 512;
+#endif
+#ifdef CONFIG_SCHED_HMP_PRIO_FILTER
 unsigned int hmp_up_prio = NICE_TO_PRIO(CONFIG_SCHED_HMP_PRIO_FILTER_VAL);
 #endif
+unsigned int hmp_next_up_threshold = 4096;
+unsigned int hmp_next_down_threshold = 4096;
 
-#ifdef CONFIG_SCHED_HMP
-//#ifdef CONFIG_SCHED_HMP_HANCEMENT
+#ifdef CONFIG_SCHED_HMP_LITTLE_PACKING
+#ifndef CONFIG_ARCH_VEXPRESS_TC2
+unsigned int hmp_packing_enabled = 1;
+unsigned int hmp_full_threshold = (NICE_0_LOAD * 9) / 8;
+#else
+/* TC2 has a sharp consumption curve @ around 800Mhz, so
+   we aim to spread the load around that frequency. */
+unsigned int hmp_packing_enabled;
+unsigned int hmp_full_threshold = 650;  /*  80% of the 800Mhz freq * NICE_0_LOAD */
+#endif
+#endif
+
+
+
+//#ifdef CONFIG_SCHED_HMP
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 /* Schedule entity */
 #define se_pid(se) ((se != NULL && entity_is_task(se)) ? \
                         container_of(se, struct task_struct, se)->pid : -1)
@@ -2334,7 +2378,6 @@ static inline void enqueue_entity_load_avg(struct cfs_rq *cfs_rq,
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 		cfs_nr_pending(cpu) = 0;
 		cfs_pending_load(cpu) = 0;
-#endif
 #ifdef CONFIG_SCHED_HMP_PRIO_FILTER
 		if (!task_low_priority(task_of(se)->prio))
 			cfs_nr_normal_prio(cpu)++;
@@ -2342,6 +2385,7 @@ static inline void enqueue_entity_load_avg(struct cfs_rq *cfs_rq,
 #ifdef CONFIG_HMP_TRACER
 		trace_sched_cfs_enqueue_task(task_of(se), se_load(se), cpu);
 #endif
+#endif  /*      #ifdef CONFIG_SCHED_HMP_ENHANCEMENT     */
 	}
 	else  /* there may be something wrong */
 		rq_of(cfs_rq)->avg.load_avg_ratio += se->avg.load_avg_ratio;
@@ -3660,7 +3704,7 @@ static inline void hrtick_update(struct rq *rq)
 }
 #endif
 
-#if defined(CONFIG_SCHED_HMP_HANCEMENT) || defined(CONFIG_MTK_SCHED_CMP)
+#if defined(CONFIG_SCHED_HMP_ENHANCEMENT) || defined(CONFIG_MTK_SCHED_CMP)
 
 /* CPU cluster statistics for task migration control */
 #define HMP_GB (0x1000)
@@ -4610,58 +4654,54 @@ static struct sched_entity *hmp_get_lightest_task(
 	return min_se;
 }
 
-/*
- * Migration thresholds should be in the range [0..1023]
- * hmp_up_threshold: min. load required for migrating tasks to a faster cpu
- * hmp_down_threshold: max. load allowed for tasks migrating to a slower cpu
- *
- * hmp_up_prio: Only up migrate task with high priority (<hmp_up_prio)
- * hmp_next_up_threshold: Delay before next up migration (1024 ~= 1 ms)
- * hmp_next_down_threshold: Delay before next down migration (1024 ~= 1 ms)
- *
- * Small Task Packing:
- * We can choose to fill the littlest CPUs in an HMP system rather than
- * the typical spreading mechanic. This behavior is controllable using
- * two variables.
- * hmp_packing_enabled: runtime control over pack/spread
- * hmp_full_threshold: Consider a CPU with this much unweighted load full
- */
-#ifdef CONFIG_SCHED_HMP_DCMP
-unsigned int hmp_up_threshold = 256;
-unsigned int hmp_down_threshold = 0;
-#else
-unsigned int hmp_up_threshold = 700;
-unsigned int hmp_down_threshold = 512;
-#endif
-#ifdef CONFIG_SCHED_HMP_PRIO_FILTER
-unsigned int hmp_up_prio = NICE_TO_PRIO(CONFIG_SCHED_HMP_PRIO_FILTER_VAL);
-#endif
-unsigned int hmp_next_up_threshold = 4096;
-unsigned int hmp_next_down_threshold = 4096;
-
-#ifdef CONFIG_SCHED_HMP_LITTLE_PACKING
-#ifndef CONFIG_ARCH_VEXPRESS_TC2
-unsigned int hmp_packing_enabled = 1;
-unsigned int hmp_full_threshold = (NICE_0_LOAD * 9) / 8;
-#else
-/* TC2 has a sharp consumption curve @ around 800Mhz, so
-   we aim to spread the load around that frequency. */
-unsigned int hmp_packing_enabled;
-unsigned int hmp_full_threshold = 650;  /*  80% of the 800Mhz freq * NICE_0_LOAD */
-#endif
-#endif
 
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+/*
+ * Heterogenous Multi-Processor (HMP) - Declaration and Useful Macro
+ */
+
+
+#define hmp_caller_is_gb(caller) ((HMP_GB == caller)?1:0)
+
+#define hmp_cpu_is_fast(cpu) cpumask_test_cpu(cpu, &hmp_fast_cpu_mask)
+#define hmp_cpu_is_slow(cpu) cpumask_test_cpu(cpu, &hmp_slow_cpu_mask)
+#define hmp_cpu_stable(cpu) (hmp_cpu_is_fast(cpu) ? \
+			hmp_up_stable(cpu) : hmp_down_stable(cpu))
+
+#define hmp_inc(v) ((v) + 1)
+#define hmp_dec(v) ((v) - 1)
+#define hmp_pos(v) ((v) < (0) ? (0) : (v))
+
+#define task_created(f) ((SD_BALANCE_EXEC == f || SD_BALANCE_FORK == f)?1:0)
+#define task_cpus_allowed(mask, p) cpumask_intersects(mask, tsk_cpus_allowed(p))
+#define task_slow_cpu_allowed(p) task_cpus_allowed(&hmp_slow_cpu_mask, p)
+#define task_fast_cpu_allowed(p) task_cpus_allowed(&hmp_fast_cpu_mask, p)
 #define hmp_last_up_migration(cpu) \
 			cpu_rq(cpu)->cfs.avg.hmp_last_up_migration
 #define hmp_last_down_migration(cpu) \
 			cpu_rq(cpu)->cfs.avg.hmp_last_down_migration
+
+
 static int hmp_select_task_rq_fair(int sd_flag, struct task_struct *p,
 			int prev_cpu, int new_cpu);
+
+/* Function Declaration */
+static int hmp_up_stable(int cpu);
+static int hmp_down_stable(int cpu);
+
+static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_entity *se,
+				     struct clb_env *clbenv);
+
+static unsigned int hmp_down_migration(int cpu, int *target_cpu, struct sched_entity *se,
+				       struct clb_env *clbenv);
+
 #else
+
 static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_entity *se);
 static unsigned int hmp_down_migration(int cpu, struct sched_entity *se);
+
 #endif
+
 static inline unsigned int hmp_domain_min_load(struct hmp_domain *hmpd,
 						int *min_cpu, struct cpumask *affinity);
 
@@ -6326,7 +6366,7 @@ static
 int can_migrate_task(struct task_struct *p, struct lb_env *env)
 {
 	int tsk_cache_hot = 0;
-#ifdef CONFIG_SCHED_HMP_HANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	/*
 	 * We do not migrate tasks that are:
 	 * 1) throttled_lb_pair, or
@@ -6341,7 +6381,7 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 		schedstat_inc(p, se.statistics.nr_failed_migrations_affine);
 		mt_sched_printf(sched_lb, "[%s] %d %s affinity fail 0x%lu ",
 			__func__, p->pid, p->comm, p->cpus_allowed.bits[0]);
-#ifdef CONFIG_SCHED_HMP_HANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 		/*
 		 * Remember if this task can be migrated to any other cpu in
 		 * our sched_group. We may want to revisit it if we couldn't
@@ -7327,7 +7367,7 @@ unsigned long scale_rt_power(int cpu)
 {
 	struct rq *rq = cpu_rq(cpu);
 	u64 total, available;
-#ifdef CONFIG_SCHED_GHMP_ENHANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	u64 age_stamp, avg;
 	/*
 	 * Since we're reading these variables without serialization make sure
@@ -8951,33 +8991,6 @@ void sched_get_big_little_cpus(struct cpumask *big, struct cpumask *little)
 }
 EXPORT_SYMBOL(sched_get_big_little_cpus);
 
-/*
- * Heterogenous Multi-Processor (HMP) - Declaration and Useful Macro
- */
-
-/* Function Declaration */
-static int hmp_up_stable(int cpu);
-static int hmp_down_stable(int cpu);
-static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_entity *se,
-				     struct clb_env *clbenv);
-static unsigned int hmp_down_migration(int cpu, int *target_cpu, struct sched_entity *se,
-				       struct clb_env *clbenv);
-
-#define hmp_caller_is_gb(caller) ((HMP_GB == caller)?1:0)
-
-#define hmp_cpu_is_fast(cpu) cpumask_test_cpu(cpu, &hmp_fast_cpu_mask)
-#define hmp_cpu_is_slow(cpu) cpumask_test_cpu(cpu, &hmp_slow_cpu_mask)
-#define hmp_cpu_stable(cpu) (hmp_cpu_is_fast(cpu) ? \
-			hmp_up_stable(cpu) : hmp_down_stable(cpu))
-
-#define hmp_inc(v) ((v) + 1)
-#define hmp_dec(v) ((v) - 1)
-#define hmp_pos(v) ((v) < (0) ? (0) : (v))
-
-#define task_created(f) ((SD_BALANCE_EXEC == f || SD_BALANCE_FORK == f)?1:0)
-#define task_cpus_allowed(mask, p) cpumask_intersects(mask, tsk_cpus_allowed(p))
-#define task_slow_cpu_allowed(p) task_cpus_allowed(&hmp_slow_cpu_mask, p)
-#define task_fast_cpu_allowed(p) task_cpus_allowed(&hmp_fast_cpu_mask, p)
 
 /*
  * Heterogenous Multi-Processor (HMP) - Utility Function

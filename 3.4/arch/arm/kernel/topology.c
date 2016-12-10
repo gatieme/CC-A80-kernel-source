@@ -65,7 +65,7 @@ static void set_power_scale(unsigned int cpu, unsigned long power)
 //#endif  /*  CONFIG_CPU_POWER_MANAGEMENT */
 
 
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT /*ifnot*/
+//#ifdef CONFIG_SCHED_HMP_ENHANCEMENT /*ifnot*/
 
 
 
@@ -121,7 +121,7 @@ int arch_get_invariant_power_enabled(void)
 
 
 
-#endif  /*  CONFIG_SCHED_HMP_ENHANCEMENT    ifnot*/
+//#endif  /*  CONFIG_SCHED_HMP_ENHANCEMENT    ifnot*/
 
 
 

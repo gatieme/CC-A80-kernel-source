@@ -543,7 +543,7 @@ EXPORT_SYMBOL_GPL(cpu_park);
 static int __cpu_stop_dispatch_work(unsigned int cpu, struct cpu_stop_work *work)
 {
         struct cpu_stopper *stopper = &per_cpu(cpu_stopper, cpu);
-//        struct task_struct *p = per_cpu(cpu_stopper_task, cpu);
+        //struct task_struct *p = per_cpu(cpu_stopper_task, cpu);
 
         unsigned long flags;
         int ret = 0;
@@ -552,7 +552,7 @@ static int __cpu_stop_dispatch_work(unsigned int cpu, struct cpu_stop_work *work
 
         if (stopper->enabled) {
                 list_add_tail(&work->list, &stopper->works);
-                wake_up_process(p);
+                //wake_up_process(p);
         } else {
                 cpu_stop_signal_done(work->done, false);
                 ret = 1;

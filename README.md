@@ -104,3 +104,5 @@ update_sd_lb_stats
 check_asym_packing
 calculate_imbalance
 find_busiest_queue
+
+#9 enqueue_entity_load_avg 和 dequeue_entity_load_avg
