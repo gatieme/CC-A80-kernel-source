@@ -443,7 +443,6 @@ TRACE_EVENT(sched_pi_setprio,
 /* add by gatieme(ChengJean) @ 2012-12-03 23:09 */
 #ifdef CONFIG_HMP_TRACER
 
-
 TRACE_EVENT(sched_task_entity_avg,
 
     TP_PROTO(unsigned int tag, struct task_struct *tsk, struct sched_avg *avg),
