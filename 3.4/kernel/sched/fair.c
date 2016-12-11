@@ -4521,6 +4521,19 @@ extern struct cpumask hmp_slow_cpu_mask;
 #endif
 extern void __init arch_get_hmp_domains(struct list_head *hmp_domains_list);
 
+
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
+/*
+ * hmp_offline_cpu use the next function
+ *      ->hmp_cpu_keepalive_cancel
+ * so we defined there to resolve this error
+ */
+static void hmp_cpu_keepalive_trigger(void);
+
+static void hmp_cpu_keepalive_cancel(int cpu);
+#endif
+
+
 /* Setup hmp_domains */
 static int __init hmp_cpu_mask_setup(void)
 {
@@ -4602,9 +4615,9 @@ static void hmp_offline_cpu(int cpu)
 	if(domain)
 		cpumask_clear_cpu(cpu, &domain->cpus);
 
-#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
+//#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
         hmp_cpu_keepalive_cancel(cpu);
-#endif
+//#endif
 }
 /*
  * Needed to determine heaviest tasks etc.
@@ -9575,6 +9588,7 @@ static void hmp_cpu_keepalive_trigger(void)
 
 static void hmp_cpu_keepalive_cancel(int cpu)
 {
+#error "2222"
 }
 
 #endif	/*	CONFIG_CPU_IDLE			*/
@@ -10892,7 +10906,6 @@ static unsigned int hmp_idle_pull(int this_cpu)
 
         if (force) {
 #ifdef CONFIG_HMP_PACK_STOP_MACHINE
-#error "1111"
                 if (stop_one_cpu_dispatch(cpu_of(target),
                         hmp_idle_pull_cpu_stop,
                         target, &target->active_balance_work)) {
@@ -10902,7 +10915,6 @@ static unsigned int hmp_idle_pull(int this_cpu)
                         raw_spin_unlock_irqrestore(&target->lock, flags);
                 }
 #else
-#error "2222"
                 stop_one_cpu_nowait(cpu_of(target),
                         hmp_idle_pull_cpu_stop,
                         target, &target->active_balance_work);
