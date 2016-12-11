@@ -21,8 +21,8 @@
  */
 
 
-#define CONFIG_SCHED_HMP
-#define CONFIG_SMP
+//#define CONFIG_SCHED_HMP
+//#define CONFIG_SMP
 #include <linux/latencytop.h>
 #include <linux/sched.h>
 #include <linux/cpumask.h>
@@ -31,6 +31,10 @@
 #include <linux/interrupt.h>
 #include <linux/mempolicy.h>
 #include <linux/migrate.h>
+
+
+#include <linux/export.h>
+
 #ifdef CONFIG_HMP_STOP_MACHINE
 #include <linux/stop_machine.h>
 #endif
@@ -45,6 +49,18 @@
  */
 #include <linux/cpufreq.h>
 #endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
+
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
+/*
+ * Include cpuidle header to use cpuidle_devices so that cpuidle
+ * can idle the cpu and use keepalive timers
+ *
+ * CONFIG_HMP_DELAY_UP_MIGRATION
+ * CONFIG_CPU_IDLE
+ */
+#include <linux/cpuidle.h>
+//#define cpuidle_get_cpu_driver cpuidle_get_driver
+#endif  /*      #ifdef CONFIG_HMP_DELAY_UP_MIGRATION    */
 
 #include "sched.h"
 #ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
@@ -4096,7 +4112,8 @@ static unsigned long power_of(int cpu)
 	return cpu_rq(cpu)->cpu_power;
 }
 
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+//#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+#ifdef CONFIG_MTK_SCHED_CMP
 static unsigned long power_orig_of(int cpu)
 {
 	return cpu_rq(cpu)->cpu_power_orig;
@@ -4584,6 +4601,10 @@ static void hmp_offline_cpu(int cpu)
 
 	if(domain)
 		cpumask_clear_cpu(cpu, &domain->cpus);
+
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
+        hmp_cpu_keepalive_cancel(cpu);
+#endif
 }
 /*
  * Needed to determine heaviest tasks etc.
@@ -6221,9 +6242,12 @@ static unsigned long __read_mostly max_load_balance_interval = HZ/10;
 
 #define LBF_ALL_PINNED	0x01
 #define LBF_NEED_BREAK	0x02
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+
+//#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+#ifdef CONFIG_HMP_PACK_LB_ENV
 #define LBF_SOME_PINNED 0x04
 #endif
+
 struct lb_env {  /* there maybe something wrong */
 	struct sched_domain	*sd;
 
@@ -6241,10 +6265,11 @@ struct lb_env {  /* there maybe something wrong */
 #ifdef CONFIG_HMP_PACK_LB_ENV
         long                    imbalance;
 #else
-        union {
+        long                    load_move;
+        /*union {
         long			load_move;
         long                    imbalance;
-        };
+        };*/
 #endif
 #ifdef CONFIG_HMP_PACK_LB_ENV
         /* The set of CPUs under consideration for load-balancing */
@@ -6329,14 +6354,17 @@ static
 int can_migrate_task(struct task_struct *p, struct lb_env *env)
 {
 	int tsk_cache_hot = 0;
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
-	/*
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        int cpu;
+#endif
+        /*
 	 * We do not migrate tasks that are:
 	 * 1) throttled_lb_pair, or
 	 * 2) cannot be migrated to this CPU due to cpus_allowed, or
 	 * 3) running (obviously), or
 	 * 4) are cache-hot on their current CPU.
 	 */
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	if (throttled_lb_pair(task_group(p), env->src_cpu, env->dst_cpu))
 		return 0;
 #endif
@@ -6400,7 +6428,7 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 
 	if (tsk_cache_hot) {
 		schedstat_inc(p, se.statistics.nr_failed_migrations_hot);
-	mt_sched_printf(sched_lb, "[%s] %d %s cache hot fail",
+	        mt_sched_printf(sched_lb, "[%s] %d %s cache hot fail",
 		__func__, p->pid, p->comm);
 		return 0;
 	}
@@ -6473,8 +6501,12 @@ static int move_tasks(struct lb_env *env)
 	unsigned long load;
 	int pulled = 0;
 
+#ifdef CONFIG_HMP_PACK_LB_ENV
+	if (env->imbalance <= 0)
+#else
 	if (env->load_move <= 0)
-		return 0;
+#endif
+                return 0;
 
 	while (!list_empty(tasks)) {
 		p = list_first_entry(tasks, struct task_struct, se.group_node);
@@ -6505,8 +6537,13 @@ static int move_tasks(struct lb_env *env)
 		if (sched_feat(LB_MIN) && load < 16 && !env->sd->nr_balance_failed)
 			goto next;
 
+#ifdef CONFIG_HMP_PACK_LB_ENV
+		if ((load / 2) > env->imbalance)
+#else
 		if ((load / 2) > env->load_move)
-			goto next;
+#endif
+                        goto next;
+
 #ifdef CONFIG_HMP_PACK_LB_ENV
 		if (over_imbalance(load, env->imbalance)) {
 			goto next;
@@ -6517,7 +6554,11 @@ static int move_tasks(struct lb_env *env)
 
 		move_task(p, env);
 		pulled++;
+#ifdef CONFIG_HMP_PACK_LB_ENV
+		env->imbalance -= load;
+#else
 		env->load_move -= load;
+#endif
 
 #ifdef CONFIG_PREEMPT
 		/*
@@ -6533,8 +6574,12 @@ static int move_tasks(struct lb_env *env)
 		 * We only want to steal up to the prescribed amount of
 		 * weighted load.
 		 */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+		if (env->imbalance <= 0)
+#else
 		if (env->load_move <= 0)
-			break;
+#endif
+                        break;
 
 		continue;
 next:
@@ -6674,12 +6719,20 @@ static int cmp_move_tasks(struct sched_domain *sd, struct lb_env *env)
 	if (env->imbalance <= 0)
 		return 0;
 
+#ifdef CONFIG_HMP_PACK_LB_ENV
 	other_load_move = env->imbalance;
-	INIT_LIST_HEAD(&other_tasks);
+#else
+	other_load_move = env->load_move;
+#endif
+        INIT_LIST_HEAD(&other_tasks);
 
 /*      if (sd->flags & SD_BALANCE_TG) { */
+#ifdef CONFIG_HMP_PACK_LB_ENV
 	tg_load_move = env->imbalance;
-	INIT_LIST_HEAD(&tg_tasks);
+#else
+	tg_load_move = env->load_move;
+#endif
+        INIT_LIST_HEAD(&tg_tasks);
 	src_clid = arch_get_cluster_id(env->src_cpu);
 	dst_clid = arch_get_cluster_id(env->dst_cpu);
 	BUG_ON(dst_clid == -1 || src_clid == -1);
@@ -7621,11 +7674,22 @@ static bool update_sd_pick_busiest(struct sched_domain *sd,
  * @balance: Should we balance.
  * @sds: variable to hold the statistics for this sched_domain.
  */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+static inline void update_sd_lb_stats(struct lb_env *env,
+			int *balance, struct sd_lb_stats *sds)
+#else
 static inline void update_sd_lb_stats(struct sched_domain *sd, int this_cpu,
 			enum cpu_idle_type idle, const struct cpumask *cpus,
 			int *balance, struct sd_lb_stats *sds)
+#endif
 {
-	struct sched_domain *child = sd->child;
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        struct sched_domain *sd = env->sd;
+        int this_cpu = env->dst_cpu;
+        enum cpu_idle_type idle = env->idle;
+        const struct cpumask *cpus = env->cpus;
+#endif
+        struct sched_domain *child = sd->child;
 	struct sched_group *sg = sd->groups;
 	struct sg_lb_stats sgs;
 	int load_idx, prefer_sibling = 0;
@@ -7741,13 +7805,22 @@ static int check_asym_packing(struct sched_domain *sd,
  * @this_cpu: The cpu at whose sched_domain we're performing load-balance.
  * @imbalance: Variable to store the imbalance.
  */
-static inline void fix_small_imbalance(struct sd_lb_stats *sds,
+#ifdef CONFIG_HMP_PACK_LB_ENV
+static inline
+void fix_small_imbalance(struct lb_env *env, struct sd_lb_stats *sds)
+#else
+static inline
+void fix_small_imbalance(struct sd_lb_stats *sds,
 				int this_cpu, unsigned long *imbalance)
+#endif
 {
 	unsigned long tmp, pwr_now = 0, pwr_move = 0;
 	unsigned int imbn = 2;
 	unsigned long scaled_busy_load_per_task;
-
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        int this_cpu = env->dst_cpu;
+        unsigned long *imbalance = &(env->imbalance);
+#endif
 	if (sds->this_nr_running) {
 		sds->this_load_per_task /= sds->this_nr_running;
 		if (sds->busiest_load_per_task >
@@ -7810,10 +7883,17 @@ static inline void fix_small_imbalance(struct sd_lb_stats *sds,
  * @this_cpu: Cpu for which currently load balance is being performed.
  * @imbalance: The variable to store the imbalance.
  */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+static inline void calculate_imbalance(struct lb_env *env, struct sd_lb_stats *sds)
+#else
 static inline void calculate_imbalance(struct sd_lb_stats *sds, int this_cpu,
 		unsigned long *imbalance)
+#endif
 {
-	unsigned long max_pull, load_above_capacity = ~0UL;
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        unsigned long *imbalance = &(env->imbalance);
+#endif
+        unsigned long max_pull, load_above_capacity = ~0UL;
 
 	sds->busiest_load_per_task /= sds->busiest_nr_running;
 	if (sds->group_imb) {
@@ -7828,8 +7908,12 @@ static inline void calculate_imbalance(struct sd_lb_stats *sds, int this_cpu,
 	 */
 	if (sds->max_load < sds->avg_load) {
 		*imbalance = 0;
-		return fix_small_imbalance(sds, this_cpu, imbalance);
-	}
+#ifdef CONFIG_HMP_PACK_LB_ENV
+                return fix_small_imbalance(env, sds);
+#else
+                return fix_small_imbalance(sds, this_cpu, imbalance);
+#endif
+        }
 
 	if (!sds->group_imb) {
 		/*
@@ -7867,8 +7951,11 @@ static inline void calculate_imbalance(struct sd_lb_stats *sds, int this_cpu,
 	 * moved
 	 */
 	if (*imbalance < sds->busiest_load_per_task)
+#ifdef CONFIG_HMP_PACK_LB_ENV
+		return fix_small_imbalance(env, sds);
+#else
 		return fix_small_imbalance(sds, this_cpu, imbalance);
-
+#endif
 }
 
 /******* find_busiest_group() helpers end here *********************/
@@ -7897,12 +7984,23 @@ static inline void calculate_imbalance(struct sd_lb_stats *sds, int this_cpu,
  *		   return the least loaded group whose CPUs can be
  *		   put to idle by rebalancing its tasks onto our group.
  */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+static struct sched_group *
+find_busiest_group(struct lb_env *env, int *balance)
+#else
 static struct sched_group *
 find_busiest_group(struct sched_domain *sd, int this_cpu,
 		   unsigned long *imbalance, enum cpu_idle_type idle,
 		   const struct cpumask *cpus, int *balance)
+#endif
 {
-	struct sd_lb_stats sds;
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        struct sched_domain *sd = env->sd;
+        int this_cpu = env->dst_cpu;
+        unsigned long *imbalance = &(env->imbalance);
+        enum cpu_idle_type idle = env->idle;
+#endif
+        struct sd_lb_stats sds;
 
 	memset(&sds, 0, sizeof(sds));
 
@@ -7910,8 +8008,11 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 	 * Compute the various statistics relavent for load balancing at
 	 * this level.
 	 */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+	update_sd_lb_stats(env, balance, &sds);
+#else
 	update_sd_lb_stats(sd, this_cpu, idle, cpus, balance, &sds);
-
+#endif
 	/*
 	 * this_cpu is not the appropriate cpu to perform load balancing at
 	 * this level.
@@ -7920,7 +8021,7 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 		goto ret;
 
 	if ((idle == CPU_IDLE || idle == CPU_NEWLY_IDLE) &&
-	    check_asym_packing(sd, &sds, this_cpu, imbalance))
+                        check_asym_packing(sd, &sds, this_cpu, imbalance))
 		return sds.busiest;
 
 	/* There is no busy sibling group to pull tasks from */
@@ -7938,8 +8039,9 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 		goto force_balance;
 
 	/* SD_BALANCE_NEWIDLE trumps SMP nice when underutilized */
-	if (idle == CPU_NEWLY_IDLE && sds.this_has_capacity &&
-			!sds.busiest_has_capacity)
+	if (idle == CPU_NEWLY_IDLE
+                && sds.this_has_capacity
+                && !sds.busiest_has_capacity)
 		goto force_balance;
 
 	/*
@@ -7957,7 +8059,7 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 		goto out_balanced;
 
 	if (idle == CPU_IDLE) {
-		/*
+                /*
 		 * This cpu is idle. If the busiest group load doesn't
 		 * have more tasks than the number of available cpu's and
 		 * there is no imbalance between this and busiest group
@@ -7977,8 +8079,12 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 
 force_balance:
 	/* Looks like there is an imbalance. Compute it */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+	calculate_imbalance(env, &sds);
+#else
 	calculate_imbalance(&sds, this_cpu, imbalance);
-	return sds.busiest;
+#endif
+        return sds.busiest;
 
 out_balanced:
 	/*
@@ -7988,22 +8094,33 @@ out_balanced:
 	if (check_power_save_busiest_group(&sds, this_cpu, imbalance))
 		return sds.busiest;
 ret:
-	*imbalance = 0;
-	return NULL;
+
+        *imbalance = 0;
+        return NULL;
 }
 
 /*
  * find_busiest_queue - find the busiest runqueue among the cpus in group.
  */
+#ifdef CONFIG_HMP_PACK_LB_ENV
+static struct rq *
+find_busiest_queue(struct lb_env *env, struct sched_group *group)
+#else
 static struct rq *
 find_busiest_queue(struct sched_domain *sd, struct sched_group *group,
 		   enum cpu_idle_type idle, unsigned long imbalance,
 		   const struct cpumask *cpus)
+#endif
 {
 	struct rq *busiest = NULL, *rq;
 	unsigned long max_load = 0;
 	int i;
-
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        struct sched_domain *sd = env->sd;
+        //enum cpu_idle_type  idle = env->idle;
+        unsigned long imbalance = env->imbalance;
+	const struct cpumask *cpus = env->cpus;
+#endif
 	for_each_cpu(i, sched_group_cpus(group)) {
 		unsigned long power = power_of(i);
 		unsigned long capacity = DIV_ROUND_CLOSEST(power,
@@ -8011,10 +8128,10 @@ find_busiest_queue(struct sched_domain *sd, struct sched_group *group,
 		unsigned long wl;
 
 		if (!capacity)
-			capacity = fix_small_capacity(sd, group);
+                        capacity = fix_small_capacity(sd, group);
 
-		if (!cpumask_test_cpu(i, cpus))
-			continue;
+                if (!cpumask_test_cpu(i, cpus))
+                        continue;
 
 		rq = cpu_rq(i);
 		wl = weighted_cpuload(i);
@@ -8024,7 +8141,7 @@ find_busiest_queue(struct sched_domain *sd, struct sched_group *group,
 		 * which is not scaled with the cpu power.
 		 */
 		if (capacity && rq->nr_running == 1 && wl > imbalance)
-			continue;
+                        continue;
 
 		/*
 		 * For the load comparisons with the other cpu's, consider
@@ -8052,9 +8169,19 @@ find_busiest_queue(struct sched_domain *sd, struct sched_group *group,
 /* Working cpumask for load_balance and load_balance_newidle. */
 DEFINE_PER_CPU(cpumask_var_t, load_balance_tmpmask);
 
+#ifdef CONFIG_HMP_PACK_LB_ENV
+static int need_active_balance(struct lb_env *env)
+#else
 static int need_active_balance(struct sched_domain *sd, int idle,
 			       int busiest_cpu, int this_cpu)
+#endif
 {
+#ifdef CONFIG_HMP_PACK_LB_ENV
+        struct sched_domain *sd = env->sd;
+        int idle = env->idle;
+	int busiest_cpu = env->src_cpu;
+        int this_cpu = env->dst_cpu;
+#endif
 	if (idle == CPU_NEWLY_IDLE) {
 
 		/*
@@ -8103,7 +8230,9 @@ static int load_balance(int this_cpu, struct rq *this_rq,
 {
     int ld_moved, cur_ld_moved, active_balance = 0;
 	struct sched_group *group;
+#ifndef CONFIG_HMP_PACK_LB_ENV
 	unsigned long imbalance;
+#endif
 	struct rq *busiest;
 	unsigned long flags;
 	struct cpumask *cpus = __get_cpu_var(load_balance_tmpmask);
@@ -8205,7 +8334,7 @@ redo:
 		 */
 		env.flags |= LBF_ALL_PINNED;
 #ifndef CONFIG_HMP_PACK_LB_ENV
-		env.load_move	= imbalance;
+                env.load_move	= imbalance;
 #endif
                 env.src_cpu	= busiest->cpu;
 		env.src_rq	= busiest;
@@ -9264,6 +9393,8 @@ out_unlock:
 
 
 #ifdef CONFIG_HMP_DELAY_UP_MIGRATION
+
+
 /*
  * hmp_idle_pull_cpu_stop is run by cpu stopper and used to
  * migrate a specific task from one runqueue to another.
@@ -9338,6 +9469,117 @@ out_unlock:
 	return 0;
 }
 
+
+#ifdef CONFIG_CPU_IDLE
+/*
+ * hmp_idle_pull:
+ *
+ * In this version we have stopped using forced up migrations when we
+ * detect that a task running on a little CPU should be moved to a bigger
+ * CPU. In most cases, the bigger CPU is in a deep sleep state and a forced
+ * migration means we stop the task immediately but need to wait for the
+ * target CPU to wake up before we can restart the task which is being
+ * moved. Instead, we now wake a big CPU with an IPI and ask it to pull
+ * a task when ready. This allows the task to continue executing on its
+ * current CPU, reducing the amount of time that the task is stalled for.
+ *
+ * keepalive timers:
+ *
+ * The keepalive timer is used as a way to keep a CPU engaged in an
+ * idle pull operation out of idle while waiting for the source
+ * CPU to stop and move the task. Ideally this would not be necessary
+ * and we could impose a temporary zero-latency requirement on the
+ * current CPU, but in the current QoS framework this will result in
+ * all CPUs in the system being unable to enter idle states which is
+ * not desirable. The timer does not perform any work when it expires.
+ */
+struct hmp_keepalive {
+        bool init;
+        ktime_t delay;  /* if zero, no need for timer */
+        struct hrtimer timer;
+};
+DEFINE_PER_CPU(struct hmp_keepalive, hmp_cpu_keepalive);
+
+/* setup per-cpu keepalive timers */
+static enum hrtimer_restart hmp_cpu_keepalive_notify(struct hrtimer *hrtimer)
+{
+        return HRTIMER_NORESTART;
+}
+
+/*
+ * Work out if any of the idle states have an exit latency too high for us.
+ * ns_delay is passed in containing the max we are willing to tolerate.
+ * If there are none, set ns_delay to zero.
+ * If there are any, set ns_delay to
+ * ('target_residency of state with shortest too-big latency' - 1) * 1000.
+ */
+static void hmp_keepalive_delay(int cpu, unsigned int *ns_delay)
+{
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+//        struct cpuidle_device *dev = per_cpu(cpuidle_devices, cpu);
+//        struct cpuidle_driver *drv = cpuidle_get_cpu_driver(dev);
+//#else
+        struct cpuidle_driver *drv = cpuidle_get_driver( );
+//#endif
+        if (drv) {
+                unsigned int us_delay = UINT_MAX;
+                unsigned int us_max_delay = *ns_delay / 1000;
+                int idx;
+                /* if cpuidle states are guaranteed to be sorted we
+                 * could stop at the first match.
+                 */
+                for (idx = 0; idx < drv->state_count; idx++) {
+                        if (drv->states[idx].exit_latency > us_max_delay &&
+                                drv->states[idx].target_residency < us_delay) {
+                                us_delay = drv->states[idx].target_residency;
+                        }
+                }
+                if (us_delay == UINT_MAX)
+                        *ns_delay = 0; /* no timer required */
+                else
+                        *ns_delay = 1000 * (us_delay - 1);
+        }
+}
+
+static void hmp_cpu_keepalive_trigger(void)
+{
+        int cpu = smp_processor_id();
+        struct hmp_keepalive *keepalive = &per_cpu(hmp_cpu_keepalive, cpu);
+        if (!keepalive->init) {
+                unsigned int ns_delay = 100000; /* tolerate 100usec delay */
+
+                hrtimer_init(&keepalive->timer,
+                                CLOCK_MONOTONIC, HRTIMER_MODE_REL_PINNED);
+                keepalive->timer.function = hmp_cpu_keepalive_notify;
+
+                hmp_keepalive_delay(cpu, &ns_delay);
+                keepalive->delay = ns_to_ktime(ns_delay);
+                keepalive->init = true;
+        }
+        if (ktime_to_ns(keepalive->delay))
+                hrtimer_start(&keepalive->timer,
+                        keepalive->delay, HRTIMER_MODE_REL_PINNED);
+}
+
+static void hmp_cpu_keepalive_cancel(int cpu)
+{
+        struct hmp_keepalive *keepalive = &per_cpu(hmp_cpu_keepalive, cpu);
+        if (keepalive->init)
+                hrtimer_cancel(&keepalive->timer);
+}
+#else /* !CONFIG_CPU_IDLE */
+static void hmp_cpu_keepalive_trigger(void)
+{
+}
+
+
+static void hmp_cpu_keepalive_cancel(int cpu)
+{
+}
+
+#endif	/*	CONFIG_CPU_IDLE			*/
+
+#endif	/*	CONFIG_HMP_DELAY_UP_MIGRATION	*/
 
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 
@@ -10189,7 +10431,7 @@ out_force_up:
                         hmp_cpu_keepalive_trigger( );           /*      为大核设置保活监控定时器(add by gatieme(ChengJean))        */
 #ifdef CONFIG_HMP_PACK_STOP_MACHINE
                         if (stop_one_cpu_dispatch(cpu_of(target),
-                                hmp_active_task_migration_cpu_stop,
+                                hmp_idle_pull_cpu_stop,
                                 target, &target->active_balance_work)) {
                                 raw_spin_lock_irqsave(&target->lock, flags);
                                 target->active_balance = 0;
@@ -10198,7 +10440,7 @@ out_force_up:
                         }
 #else
                         stop_one_cpu_nowait(cpu_of(target),
-                                hmp_active_task_migration_cpu_stop,
+                                hmp_idle_pull_cpu_stop,
                                 target, &target->active_balance_work);  /*  暂停迁移源 CPU 后, 强行进行迁移 */
 #endif  /*      #ifdef CONFIG_HMP_PACK_STOP_MACHINE     */
                 }
@@ -10212,6 +10454,7 @@ out_force_up:
         return force;
 }
 
+#endif
 
 #else /* CONFIG_SCHED_HMP_ENHANCEMENT */
 
@@ -10649,6 +10892,7 @@ static unsigned int hmp_idle_pull(int this_cpu)
 
         if (force) {
 #ifdef CONFIG_HMP_PACK_STOP_MACHINE
+#error "1111"
                 if (stop_one_cpu_dispatch(cpu_of(target),
                         hmp_idle_pull_cpu_stop,
                         target, &target->active_balance_work)) {
@@ -10658,6 +10902,7 @@ static unsigned int hmp_idle_pull(int this_cpu)
                         raw_spin_unlock_irqrestore(&target->lock, flags);
                 }
 #else
+#error "2222"
                 stop_one_cpu_nowait(cpu_of(target),
                         hmp_idle_pull_cpu_stop,
                         target, &target->active_balance_work);

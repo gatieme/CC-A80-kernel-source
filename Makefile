@@ -20,7 +20,7 @@ menuconfig	:
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"移植 hmpcb 调度器到 kernel/sched/fair.c, 检查编译通过..."
+GITHUB_COMMIT	:=	"移植 hmpcb 调度器到 kernel/sched/fair.c, 验证编译通过, 解决编译错误..."
 
 github	:
 	git pull

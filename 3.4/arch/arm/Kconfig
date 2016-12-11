@@ -1812,6 +1812,12 @@ config HMP_POWER_AWARE_CONTROLLER
 	help
 		Power-aware scheduler for b.L MP controller and status interface
 
+config HMP_PACK_LB_ENV
+        bool "(EXPERIMENTAL-HMPCB) LB environment enhancement for B.L MP Cobtroller"
+	depends on SCHED_HMP_ENHANCEMENT
+	help
+                lb_env enhancement for b.L MP controller
+
 
 # add by gatieme(ChengJean) for SCHED_HMP_ENHANCEMENT
 # end 2016-12-07 21:05
