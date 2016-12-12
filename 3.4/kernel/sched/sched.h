@@ -226,7 +226,7 @@ struct cfs_rq {
 
 #ifdef CONFIG_SMP
 #ifdef CONFIG_SCHED_HMP /*      add by gatieme for per runqueue's avg tracking  */
-                struct sched_avg avg;
+        struct sched_avg avg;
 #endif  /*      CONFIG_SCHED_HMP_ENHANCEMENT    */
 /*
  * Load-tracking only depends on SMP, FAIR_GROUP_SCHED dependency below may be
