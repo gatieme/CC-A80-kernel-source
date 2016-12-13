@@ -106,3 +106,53 @@ calculate_imbalance
 find_busiest_queue
 
 #9 enqueue_entity_load_avg 和 dequeue_entity_load_avg
+
+
+
+#10     启动过程
+-------
+
+
+[init/main.c] start_kernel
+
+```cpp
+        setup_arch(&command_line);
+	mm_init_owner(&init_mm, &init_task);
+	mm_init_cpumask(&init_mm);
+	setup_command_line(command_line);
+	setup_nr_cpu_ids();
+	setup_per_cpu_areas();
+```
+
+[arch/arm/kernel/setup.c] setup_arch
+
+```cpp
+#ifdef CONFIG_SMP
+        if (is_smp()) {
+                if (!mdesc->smp_init || !mdesc->smp_init())
+                        smp_set_ops(mdesc->smp);
+                        smp_init_cpus();        /* add by gatieme for debug */
+                        smp_build_mpidr_hash();
+        }
+#endif
+```
+
+
+
+[arch/arm/kernel/smp.c] smp_init_cpus
+```cpp
+        if (smp_ops.smp_init_cpus)
+                smp_ops.smp_init_cpus();
+```
+
+
+[arch/arm/common/mcpm_platsmp.c]
+
+```cpp
+.smp_init_cpus = mcpm_smp_init_cpus,
+```
+
+[arch/arm/common/mcpm_entry.c]   mcmp_smp_init_cpus
+```cpp
+
+```

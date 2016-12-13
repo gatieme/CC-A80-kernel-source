@@ -6,7 +6,7 @@
  *  GK 2/5/95  -  Changed to support mounting root fs via NFS
  *  Added initrd & change_root: Werner Almesberger & Hans Lermen, Feb '96
  *  Moan early if gcc is old, avoiding bogus kernels - Paul Gortmaker, May '96
- *  Simplified starting of init:  Michael A. Griffith <grif@acm.org> 
+ *  Simplified starting of init:  Michael A. Griffith <grif@acm.org>
  */
 
 #include <linux/types.h>
@@ -473,6 +473,12 @@ asmlinkage void __init start_kernel(void)
 	 */
 	lockdep_init();
 	smp_setup_processor_id();
+	(&command_line);
+	mm_init_owner(&init_mm, &init_task);
+	mm_init_cpumask(&init_mm);
+	setup_command_line(command_line);
+	setup_nr_cpu_ids();
+	setup_per_cpu_areas();
 	debug_objects_early_init();
 
 	/*
@@ -493,7 +499,7 @@ asmlinkage void __init start_kernel(void)
 	boot_cpu_init();
 	page_address_init();
 	printk(KERN_NOTICE "%s", linux_banner);
-	setup_arch(&command_line);
+	setup_arch(&command_line); /* add by gatieme for debug */
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);

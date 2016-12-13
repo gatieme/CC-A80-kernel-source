@@ -194,7 +194,6 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= arm
 CROSS_COMPILE	?= ~/Work/Arm/Board/cubieboard/cc-a80/cc-a80-linux-sdk/tools/crosscompiler/bin/arm-linux-gnueabi-
-$(CONFIG_CROSS_COMPILE:"%"=%)
 #ARCH		?= $(SUBARCH)
 #CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 

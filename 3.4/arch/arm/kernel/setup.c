@@ -500,7 +500,7 @@ static void __init smp_build_mpidr_hash(void)
 	 */
 	for_each_possible_cpu(i)
 		mask |= (cpu_logical_map(i) ^ cpu_logical_map(0));
-	pr_debug("mask of set bits 0x%x\n", mask);
+	pr_debug("[%s], mask of set bits 0x%x\n", __func__, mask); /* modify by gatieme foe debug*/
 	/*
 	 * Find and stash the last and first bit set at all affinity levels to
 	 * check how many bits are required to represent them.
@@ -532,7 +532,8 @@ static void __init smp_build_mpidr_hash(void)
 						(bits[1] + bits[0]);
 	mpidr_hash.mask = mask;
 	mpidr_hash.bits = bits[2] + bits[1] + bits[0];
-	pr_debug("MPIDR hash: aff0[%u] aff1[%u] aff2[%u] mask[0x%x] bits[%u]\n",
+	pr_debug("[%s], MPIDR hash: aff0[%u] aff1[%u] aff2[%u] mask[0x%x] bits[%u]\n",
+                                __func__,       /* modify by gatieme foe debug*/
 				mpidr_hash.shift_aff[0],
 				mpidr_hash.shift_aff[1],
 				mpidr_hash.shift_aff[2],
@@ -1091,7 +1092,7 @@ void __init setup_arch(char **cmdline_p)
 	if (is_smp()) {
 		if (!mdesc->smp_init || !mdesc->smp_init())
 			smp_set_ops(mdesc->smp);
-		smp_init_cpus();
+		smp_init_cpus();        /* add by gatieme for debug */
 		smp_build_mpidr_hash();
 	}
 #endif
@@ -1173,7 +1174,7 @@ static int c_show(struct seq_file *m, void *v)
 #if defined(CONFIG_ARCH_SUNXI)
 	u32 serial[4];
 	int ret;
-	
+
 	memset(serial, 0, sizeof(serial));
 	ret = sunxi_get_serial((u8 *)serial);
 #endif

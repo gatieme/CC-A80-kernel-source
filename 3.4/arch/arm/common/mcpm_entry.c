@@ -91,6 +91,7 @@ void mcpm_smp_init_cpus(void)
 	for (i = 0; i < ncores; i++) {
 	    set_cpu_possible(i, true);
 	}
+	early_printk("[%s] per cpu possible\n", __func__); /* add by gatieme for debug */
 
 	/* hard-encode by sunny to support sun9i 2big+2little,
 	 * we should use device-tree to config the cluster and cpu topology information.
@@ -110,6 +111,7 @@ void mcpm_smp_init_cpus(void)
 #else
 	set_smp_cross_call(gic_raise_softirq);
 #endif
+	early_printk("[%s] init CPU success\n", __func__); /* add by gatieme for debug */
 }
 
 int mcpm_cpu_kill(unsigned int cpu)
