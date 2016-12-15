@@ -494,7 +494,6 @@ asmlinkage void __init start_kernel(void)
 	page_address_init();
 	printk(KERN_NOTICE "%s\n", linux_banner);
 	setup_arch(&command_line);
-        printk("[%s, %d], command_line = %s\n", __func__, __LINE__, command_line);
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);
