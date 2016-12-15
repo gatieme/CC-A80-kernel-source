@@ -546,6 +546,7 @@ static void __init smp_build_mpidr_hash(void)
 	if (mpidr_hash_size() > 4 * num_possible_cpus())
 		pr_warn("Large number of MPIDR hash buckets detected\n");
 	sync_cache_w(&mpidr_hash);
+        printk(KERN_INFO "[%s, %d] success...\n", __func__, __LINE__);
 }
 #endif
 
@@ -1114,6 +1115,7 @@ void __init setup_arch(char **cmdline_p)
 
 	if (mdesc->init_early)
 		mdesc->init_early();
+        printk(KERN_DEBUG "[%s, %d] setup arch success...\n");
 }
 
 

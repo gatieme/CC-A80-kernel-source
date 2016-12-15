@@ -467,13 +467,21 @@ asmlinkage void __init start_kernel(void)
 	char * command_line;
 	extern const struct kernel_param __start___param[], __stop___param[];
 
+	early_printk("[%s, %d]\n", __func__, __LINE__); /* add by gatieme for debug */
 	/*
 	 * Need to run as early as possible, to initialize the
 	 * lockdep hash:
 	 */
 	lockdep_init();
 	smp_setup_processor_id();
+	(&command_line);
+	mm_init_owner(&init_mm, &init_task);
+	mm_init_cpumask(&init_mm);
+	setup_command_line(command_line);
+	setup_nr_cpu_ids();
+	setup_per_cpu_areas();
 	debug_objects_early_init();
+	early_printk("[%s, %d]\n", __func__, __LINE__); /* add by gatieme for debug */
 
 	/*
 	 * Set up the the initial canary ASAP:
@@ -492,9 +500,8 @@ asmlinkage void __init start_kernel(void)
 	tick_init();
 	boot_cpu_init();
 	page_address_init();
-	printk(KERN_NOTICE "%s\n", linux_banner);
-	setup_arch(&command_line);
-        printk("[%s, %d], command_line = %s\n", __func__, __LINE__, command_line);
+	printk(KERN_NOTICE "%s", linux_banner);
+	setup_arch(&command_line); /* add by gatieme for debug */
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);

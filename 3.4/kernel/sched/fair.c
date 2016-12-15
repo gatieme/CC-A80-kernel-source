@@ -4615,9 +4615,9 @@ static void hmp_offline_cpu(int cpu)
 	if(domain)
 		cpumask_clear_cpu(cpu, &domain->cpus);
 
-//#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
         hmp_cpu_keepalive_cancel(cpu);
-//#endif
+#endif
 }
 /*
  * Needed to determine heaviest tasks etc.
@@ -4631,7 +4631,7 @@ static inline struct hmp_domain *hmp_faster_domain(int cpu);
 #if defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_ENHANCEMENT)
 /* must hold runqueue lock for queue se is currently on */
 static struct sched_entity *hmp_get_heaviest_task(
-				struct sched_entity *se, int migrate_up)
+				struct sched_entity *se, int migrate_up);
 
 static struct sched_entity *hmp_get_lightest_task(
 				struct sched_entity *se, int migrate_down);
@@ -9588,7 +9588,6 @@ static void hmp_cpu_keepalive_trigger(void)
 
 static void hmp_cpu_keepalive_cancel(int cpu)
 {
-#error "2222"
 }
 
 #endif	/*	CONFIG_CPU_IDLE			*/
@@ -9597,13 +9596,13 @@ static void hmp_cpu_keepalive_cancel(int cpu)
 
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 
-
+#ifdef CONFIG_OF
 void sched_get_big_little_cpus(struct cpumask *big, struct cpumask *little)
 {
 	arch_get_big_little_cpus(big, little);
 }
 EXPORT_SYMBOL(sched_get_big_little_cpus);
-
+#endif
 
 /*
  * Heterogenous Multi-Processor (HMP) - Utility Function
@@ -10445,7 +10444,11 @@ out_force_up:
                         hmp_cpu_keepalive_trigger( );           /*      为大核设置保活监控定时器(add by gatieme(ChengJean))        */
 #ifdef CONFIG_HMP_PACK_STOP_MACHINE
                         if (stop_one_cpu_dispatch(cpu_of(target),
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
                                 hmp_idle_pull_cpu_stop,
+#else
+                                hmp_active_task_migration_cpu_stop,
+#endif
                                 target, &target->active_balance_work)) {
                                 raw_spin_lock_irqsave(&target->lock, flags);
                                 target->active_balance = 0;
@@ -10454,7 +10457,11 @@ out_force_up:
                         }
 #else
                         stop_one_cpu_nowait(cpu_of(target),
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
                                 hmp_idle_pull_cpu_stop,
+#else
+                                hmp_active_task_migration_cpu_stop,
+#endif
                                 target, &target->active_balance_work);  /*  暂停迁移源 CPU 后, 强行进行迁移 */
 #endif  /*      #ifdef CONFIG_HMP_PACK_STOP_MACHINE     */
                 }
@@ -10907,7 +10914,11 @@ static unsigned int hmp_idle_pull(int this_cpu)
         if (force) {
 #ifdef CONFIG_HMP_PACK_STOP_MACHINE
                 if (stop_one_cpu_dispatch(cpu_of(target),
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
                         hmp_idle_pull_cpu_stop,
+#else
+                        hmp_active_task_migration_cpu_stop,
+#endif
                         target, &target->active_balance_work)) {
                         raw_spin_lock_irqsave(&target->lock, flags);
                         target->active_balance = 0;
@@ -10916,7 +10927,11 @@ static unsigned int hmp_idle_pull(int this_cpu)
                 }
 #else
                 stop_one_cpu_nowait(cpu_of(target),
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION
                         hmp_idle_pull_cpu_stop,
+#else
+                        hmp_active_task_migration_cpu_stop,
+#endif
                         target, &target->active_balance_work);
 #endif  /*      #ifdef CONFIG_HMP_PACK_STOP_MACHINE     */
         }

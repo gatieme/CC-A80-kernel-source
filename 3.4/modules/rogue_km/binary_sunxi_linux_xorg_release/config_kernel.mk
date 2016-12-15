@@ -1,6 +1,6 @@
-override HOST_PRIMARY_ARCH := host_i386
+override HOST_PRIMARY_ARCH := host_x86_64
 override HOST_32BIT_ARCH := host_i386
-override HOST_FORCE_32BIT := 
+override HOST_FORCE_32BIT := -m32
 override TARGET_PRIMARY_ARCH := target_armhf
 override TARGET_SECONDARY_ARCH := 
 override TARGET_ALL_ARCH :=  target_armhf 

@@ -837,6 +837,7 @@ int arch_get_cpu_throttling(int cpu)
 
 #endif /* CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY */
 
+#ifdef CONFIG_OF
 /*
  * Extras of CPU & Cluster functions
  */
@@ -859,6 +860,33 @@ int arch_is_smp(void)
 
 	return __arch_smp;
 }
+
+int arch_better_capacity(unsigned int cpu)
+{
+	BUG_ON(cpu >= num_possible_cpus());
+	return cpu_capacity[cpu].capacity > min_capacity;
+}
+
+
+void arch_get_big_little_cpus(struct cpumask *big, struct cpumask *little)
+{
+	unsigned int cpu;
+	cpumask_clear(big);
+	cpumask_clear(little);
+	for_each_possible_cpu(cpu) {
+		if (cpu_capacity[cpu].capacity > min_capacity)
+			cpumask_set_cpu(cpu, big);
+		else
+			cpumask_set_cpu(cpu, little);
+	}
+}
+
+#else
+
+int arch_better_capacity(unsigned int cpu) { return 0; }
+
+void arch_get_big_little_cpus(struct cpumask *big, struct cpumask *little) { }
+#endif
 
 int arch_get_nr_clusters(void)
 {
@@ -902,24 +930,7 @@ void arch_get_cluster_cpus(struct cpumask *cpus, int cluster_id)
 	}
 }
 
-void arch_get_big_little_cpus(struct cpumask *big, struct cpumask *little)
-{
-	unsigned int cpu;
-	cpumask_clear(big);
-	cpumask_clear(little);
-	for_each_possible_cpu(cpu) {
-		if (cpu_capacity[cpu].capacity > min_capacity)
-			cpumask_set_cpu(cpu, big);
-		else
-			cpumask_set_cpu(cpu, little);
-	}
-}
 
-int arch_better_capacity(unsigned int cpu)
-{
-	BUG_ON(cpu >= num_possible_cpus());
-	return cpu_capacity[cpu].capacity > min_capacity;
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////  [END] add by gatieme(ChengJean) @ 2012-12-07 19:05 for HMP_ENHANCEMENT
