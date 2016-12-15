@@ -20,7 +20,7 @@ menuconfig	:
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"移植 hmpcb 调度器到 kernel/sched/fair.c, 添加调试信息, 开始调试..."
+GITHUB_COMMIT	:=	"开始调试, 添加CC-A80的其他工具到当前目录..."
 
 github	:
 	git pull
