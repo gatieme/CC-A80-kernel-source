@@ -65,7 +65,7 @@
 #include "sched.h"
 #ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
 #ifdef CONFIG_LOCAL_TIMERS
-unsigned long localtimer_get_counter(void);
+unsigned long localtimer_get_counter(void);  /* add by gatieme for HMPCB */
 #endif
 #endif
 
@@ -1554,7 +1554,7 @@ static u32 __compute_runnable_contrib(u64 n)
 	return contrib + runnable_avg_yN_sum[n];
 }
 
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#ifdef CONFIG_HMP_VARIABLE_SCALE /* CONFIG_SCHED_HMP */
 
 #define HMP_VARIABLE_SCALE_SHIFT 16ULL
 struct hmp_global_attr {
@@ -1644,7 +1644,7 @@ struct cpufreq_extents {
 
 static struct cpufreq_extents freq_scale[CONFIG_NR_CPUS];
 #endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
-#endif /* CONFIG_SCHED_HMP */
+#endif /* CONFIG_HMP_VARIABLE_SCALE */
 
 #ifdef CONFIG_MTK_SCHED_CMP  /* add by gatieme(ChengJean) for nothing */
 void get_cluster_cpus(struct cpumask *cpus, int cluster_id,
@@ -1714,7 +1714,7 @@ static u64 __inline variable_scale_convert(u64 delta)
 	high *= (LOAD_AVG_PERIOD << VARIABLE_SCALE_SHIFT) / LOAD_AVG_VARIABLE_PERIOD;
 	return (low >> VARIABLE_SCALE_SHIFT) + (high << (32ULL - VARIABLE_SCALE_SHIFT));
 }
-#endif
+#endif /* CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY */
 
 /* We can represent the historical contribution to runnable average as the
  * coefficients of a geometric series.  To do this we sub-divide our runnable
@@ -1751,7 +1751,7 @@ static __always_inline int __update_entity_runnable_avg(u64 now,
 {
 	u64 delta, periods;
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
-	u64 lru;
+	u64 lru; /* save last runnable update */
 #endif
 	u32 runnable_contrib;
 	int delta_w, decayed = 0;
@@ -1771,6 +1771,12 @@ static __always_inline int __update_entity_runnable_avg(u64 now,
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	lru = sa->last_runnable_update;
 #endif
+
+#ifdef CONFIG_SCHED_HMP	/*may be something error there*/
+	delta = hmp_variable_scale_convert(delta);
+#elif defined(CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY)
+	delta = variable_scale_convert(delta);
+#endif
 	/*
 	 * This should only happen when time goes backwards, which it
 	 * unfortunately does during sched clock init when we swap over to TSC.
@@ -1779,11 +1785,7 @@ static __always_inline int __update_entity_runnable_avg(u64 now,
 		sa->last_runnable_update = now;
 		return 0;
 	}
-#ifdef CONFIG_SCHED_HMP	/*may be something error there*/
-	delta = hmp_variable_scale_convert(delta);
-#elif defined(CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY)
-	delta = variable_scale_convert(delta);
-#endif
+
 	/*
 	 * Use 1024ns as the unit of measurement since it's a reasonable
 	 * approximation of 1us and fast to compute.
@@ -2046,7 +2048,7 @@ static inline void __update_task_entity_contrib(struct sched_entity *se)
 
 /* Compute the current contribution to load_avg by se, return any delta */
 static long __update_entity_load_avg_contrib(struct sched_entity *se, long *ratio)
-{/*msy by something wrong static long __update_entity_load_avg_contrib(struct sched_entity *se)*/
+{/*may by something wrong static long __update_entity_load_avg_contrib(struct sched_entity *se)*/
 	long old_contrib = se->avg.load_avg_contrib;
 	long old_ratio   = se->avg.load_avg_ratio;
 
@@ -2292,8 +2294,9 @@ static inline void update_entity_load_avg(struct sched_entity *se,
 #else
 		rq_of(cfs_rq)->avg.load_avg_ratio += ratio_delta;
 #endif
-        } else
+        } else {
 		subtract_blocked_load_contrib(cfs_rq, -contrib_delta);
+		}
 }
 
 /*
@@ -2333,7 +2336,8 @@ static inline void update_rq_runnable_avg(struct rq *rq, int runnable)
 #if defined(CONFIG_HMP_FREQUENCY_INVARIANT_SCALE) || defined(CONFIG_ARCH_SCALE_INVARIANT_CPU_CAPACITY)
 	cpu = rq->cpu;
 #endif
-	__update_entity_runnable_avg(rq->clock_task, &rq->avg, runnable, runnable, cpu);
+	__update_entity_runnable_avg(rq->clock_task, &rq->avg, runnable, 
+									runnable, cpu);
 	__update_tg_runnable_avg(&rq->avg, &rq->cfs);
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	contrib = rq->avg.runnable_avg_sum * scale_load_down(1024);
@@ -2398,7 +2402,7 @@ static inline void enqueue_entity_load_avg(struct cfs_rq *cfs_rq,
 	if (entity_is_task(se)) {
 		cpu_rq(cpu)->cfs.avg.load_avg_contrib += se->avg.load_avg_contrib;
 		cpu_rq(cpu)->cfs.avg.load_avg_ratio += se->avg.load_avg_ratio;
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT  /* may by something here */
 		cfs_nr_pending(cpu) = 0;
 		cfs_pending_load(cpu) = 0;
 #ifdef CONFIG_SCHED_HMP_PRIO_FILTER
@@ -2439,7 +2443,7 @@ static inline void dequeue_entity_load_avg(struct cfs_rq *cfs_rq,
 		update_tg_info(cfs_rq, se, -se->avg.load_avg_ratio);
 	}
 #endif
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT  /* may by something here */
 	if (entity_is_task(se)) {
 		cpu_rq(cpu)->cfs.avg.load_avg_contrib -= se->avg.load_avg_contrib;
 		cpu_rq(cpu)->cfs.avg.load_avg_ratio -= se->avg.load_avg_ratio;
@@ -3187,7 +3191,7 @@ static void throttle_cfs_rq(struct cfs_rq *cfs_rq)
 	cfs_rq->throttled_clock = rq->clock;
 	raw_spin_lock(&cfs_b->lock);
 	list_add_tail_rcu(&cfs_rq->throttled_list, &cfs_b->throttled_cfs_rq);
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT /* add may by something here */
 	if (!cfs_b->timer_active)
 		__start_cfs_bandwidth(cfs_b);
 #endif
@@ -3301,7 +3305,7 @@ static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
 	/* if we're going inactive then everything else can be deferred */
 	if (idle)
 		goto out_unlock;
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT /* add may by something here */
 	/*
 	 * if we have relooped after returning idle once, we need to update our
 	 * status as actually running, so that other cpus doing
@@ -3445,7 +3449,7 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
 	u64 expires;
 
 	/* confirm we're still not at a refresh boundary */
-	raw_spin_lock(&cfs_b->lock);
+	raw_spin_lock(&cfs_b->lock); /* modify may be something wrong here*/
 	if (runtime_refresh_within(cfs_b, min_bandwidth_expiration)) {
 		raw_spin_unlock(&cfs_b->lock);
 		return;
@@ -3576,8 +3580,8 @@ void __start_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
 	 * (timer_active==0 becomes visible before the hrtimer call-back
 	 * terminates).  In either case we ensure that it's re-programmed
 	 */
-	while (unlikely(hrtimer_active(&cfs_b->period_timer))) {
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+	while (unlikely(hrtimer_active(&cfs_b->period_timer))
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT  /* modify may be womething wrong here */
 		&& hrtimer_try_to_cancel(&cfs_b->period_timer) < 0) {
 		/* bounce the lock to allow do_sched_cfs_period_timer to run */
 		raw_spin_unlock(&cfs_b->lock);
@@ -4473,7 +4477,12 @@ static int select_idle_sibling(struct task_struct *p, int target)
 	 * If the task is going to be woken-up on the cpu where it previously
 	 * ran and if it is currently idle, then it the right target.
 	 */
-	if (target == prev_cpu && cpus_share_cache(prev_cpu, target) && idle_cpu(prev_cpu))
+	if (target == prev_cpu &&  idle_cpu(prev_cpu)
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+			&& cpus_share_cache(prev_cpu, target) )
+#else 
+		)
+#endif
 		return prev_cpu;
 
 	/*
@@ -4488,7 +4497,11 @@ static int select_idle_sibling(struct task_struct *p, int target)
 				goto next;
 
 			for_each_cpu(i, sched_group_cpus(sg)) {
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 				if (i == target || !idle_cpu(i))
+#else
+				if (!idle_cpu(i))
+#endif
 					goto next;
 			}
 
@@ -5224,9 +5237,12 @@ static inline unsigned int hmp_domain_min_load(struct hmp_domain *hmpd,
 
 	if (min_cpu)
 		*min_cpu = min_cpu_runnable_temp;
-
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	/* domain will often have at least one empty CPU */
 	return min_runnable_load ? min_runnable_load / (LOAD_AVG_MAX + 1) : 0;
+#else
+	return min_runnable_load;
+#endif
 }
 
 /*
@@ -6050,7 +6066,11 @@ static struct task_struct *pick_next_task_fair(struct rq *rq)
 	struct sched_entity *se;
 
 	/* in case nr_running!=0 but h_nr_running==0 */
-	if (!cfs_rq->nr_running|| !cfs_rq->h_nr_running)/*maybesomething wrong*/
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
+	if (!cfs_rq->nr_running|| !cfs_rq->h_nr_running)/*maybe something wrong*/
+#else
+	if (!cfs_rq->nr_running)
+#endif
 		return NULL;
 
 	do {
@@ -8236,6 +8256,9 @@ static int active_load_balance_cpu_stop(void *data);
 /*
  * Check this_cpu to ensure it is balanced within domain. Attempt to move
  * tasks if there is an imbalance.
+ *
+ *
+ * may be something wrong with this function
  */
 static int load_balance(int this_cpu, struct rq *this_rq,
 			struct sched_domain *sd, enum cpu_idle_type idle,
@@ -8304,7 +8327,7 @@ redo:
 		goto out_balanced;
 	}
 
-#ifdef CONFIG_HMP_LAZY_BALANCE
+#ifdef CONFIG_HMP_LAZY_BALANCE /* add by gatieme */
 
 #ifdef CONFIG_HMP_POWER_AWARE_CONTROLLER
 	if (PA_ENABLE && LB_ENABLE) {
@@ -8355,6 +8378,7 @@ redo:
 #ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
 		env.mt_check_cache_in_idle = 1;
 #endif
+		/* may be something wrong with /backup/fiarmp.c */
 		if (!env.loop)
 			update_h_load(env.src_cpu);
 

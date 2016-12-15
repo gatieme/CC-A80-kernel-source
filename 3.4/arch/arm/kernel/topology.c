@@ -19,6 +19,7 @@
 #include <linux/node.h>
 #include <linux/nodemask.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 
@@ -33,7 +34,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /*  add by gatieme(ChengJean) @ 2016-12-08 00:19 */
-//#ifdef CONFIG_CPU_POWER_MANAGEMENT
+//#ifdef CONFIG_HMP_CPU_POWER_SCALE_MANAGEMENT
 /*
  * cpu power scale management
  */
@@ -270,7 +271,7 @@ static void __init parse_dt_topology(void)
 
 }
 
-#ifdef CONFIG_CPU_POWER_MANAGEMENT
+#ifdef CONFIG_HMP_CPU_POWER_SCALE_MANAGEMENT
 /*
  * Look for a customed capacity of a CPU in the cpu_capacity table during the
  * boot. The update of all CPUs is in O(n^2) for heteregeneous system but the
@@ -299,7 +300,7 @@ void update_cpu_power(unsigned int cpu, unsigned long hwid)
 }
 //#else
 //static inline void update_cpu_power(unsigned int cpuid, unsigned int mpidr) {}
-#endif /*   CONFIG_CPU_POWER_MANAGEMENT */
+#endif /*   CONFIG_HMP_CPU_POWER_SCALE_MANAGEMENT */
 
 #else   /*  CONFIG_OF */
 static inline void parse_dt_topology(void) {}
@@ -391,8 +392,10 @@ void store_cpu_topology(unsigned int cpuid)
 		cpuid_topo->socket_id = -1;
 	}
 
+	/* update core and thread sibling masks */
 	update_siblings_masks(cpuid);
-#if defined(CONFIG_CPU_POWER_MANAGEMENT) && defined(CONFIG_OF)
+#if defined(CONFIG_HMP_CPU_POWER_SCALE_MANAGEMENT) && defined(CONFIG_OF)
+	/* add by gatieme for cpupower */
 	update_cpu_power(cpuid, mpidr & MPIDR_HWID_BITMASK);
 #endif
 	printk(KERN_INFO "CPU%u: thread %d, cpu %d, socket %d, mpidr %x\n",
@@ -437,6 +440,7 @@ static const char * const little_cores[] = {
 	NULL,
 };
 
+#ifdef CONFIG_OF
 static bool is_little_cpu(struct device_node *cn)
 {
 	const char * const *lc;
@@ -445,6 +449,7 @@ static bool is_little_cpu(struct device_node *cn)
 			return true;
 	return false;
 }
+#endif
 
 /*  arch_get_fast_and_slow_cpus( ) 去获取系统中大小核 CPU 的 index.
  *  这里分别为大小核定义了 domain,
@@ -599,11 +604,13 @@ void __init init_cpu_topology(void)
 		cpu_topo->socket_id = -1;
 		cpumask_clear(&cpu_topo->core_sibling);
 		cpumask_clear(&cpu_topo->thread_sibling);
-
-		set_power_scale(cpu, SCHED_POWER_SCALE);
+#ifdef CONFIG_HMP_CPU_POWER_SCALE_MANAGEMENT
+		set_power_scale(cpu, SCHED_POWER_SCALE); /* add by gatieme for cpupower */
+#endif
 	}
 	smp_wmb();
-//#ifdef CONFIG_OF
+//#ifdef CONFIG_OF  
+	/* add by gatieme for cpupower */
 	parse_dt_topology();
 //#endif
 }
