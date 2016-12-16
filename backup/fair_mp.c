@@ -5751,8 +5751,9 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 		goto force_balance;
 
 	/* SD_BALANCE_NEWIDLE trumps SMP nice when underutilized */
-	if (idle == CPU_NEWLY_IDLE && sds.this_has_capacity &&
-			!sds.busiest_has_capacity)
+	if (idle == CPU_NEWLY_IDLE 
+	&& sds.this_has_capacity 
+	&&	!sds.busiest_has_capacity)
 		goto force_balance;
 
 	/*
