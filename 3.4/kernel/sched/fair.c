@@ -7515,7 +7515,7 @@ void update_group_power(struct sched_domain *sd, int cpu)
 	}
 
 	power = 0;
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT 
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	/* modify by gatieme for debug*/
 	if (child->flags & SD_OVERLAP) {
 		/*
@@ -7525,7 +7525,7 @@ void update_group_power(struct sched_domain *sd, int cpu)
 
 		for_each_cpu(cpu, sched_group_cpus(sdg))
 		    power += power_of(cpu);
-	} else 
+	} else
 #endif
 	{
 		/*
@@ -10815,8 +10815,8 @@ static void hmp_force_up_migration(int this_cpu)
 #warning "you use non delay up migration(force up right now) in CONFIG_SCHED_HMP which may have much BUG which may have much BUGS..."
 ////////////////////////////////////////////////////////////////////////////////
 
-                        if (!target->active_balance 
-#ifdef CONFIG_SCHED_HMP_ENHANCEMENT   /* add by gatieme for debug */ 					
+                        if (!target->active_balance
+#ifdef CONFIG_SCHED_HMP_ENHANCEMENT   /* add by gatieme for debug */
 						&& task_rq(p) == target) {
 #else
 						) {
@@ -11826,6 +11826,7 @@ static int __init init_task_detect_procfs(void)
 	pe = proc_create("task_detect", 0444, NULL, &task_detect_fops);
 	if (!pe)
 		return -ENOMEM;
+        printk(KERN_INFO "/proc/task_detect success...\n");
 	return 0;
 }
 
