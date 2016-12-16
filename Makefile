@@ -20,7 +20,7 @@ menuconfig	:
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"开始调试, 添加CC-A80的其他工具到当前目录..."
+GITHUB_COMMIT	:=	"开始调试, 修改内核..."
 
 github	:
 	git pull
