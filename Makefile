@@ -20,7 +20,7 @@ menuconfig	:
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"修改Kconfig的配置方式, 增加了调试信息宏, 修复了一处误加入的宏..."
+GITHUB_COMMIT	:=	"修改Kconfig的配置方式, 增加了调试信息宏, 下一步操作, 增加Kconfig中的调试信息和代码中的调试信息..."
 
 github	:
 	git pull
