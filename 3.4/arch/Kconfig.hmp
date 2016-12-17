@@ -291,3 +291,11 @@ config CLUSTER1_CPU_MASK
 endmenu #"bit.LITTLE mp scheduler enhancement by SUNXI"
 
 endif
+
+
+menu "Debug hmp scheduler"
+
+config 
+
+endmenu #"Debug hmp scheduler"
+

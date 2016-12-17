@@ -1256,6 +1256,11 @@ struct sched_avg {
 #define hmp_task_should_forkboost(task) ((task->parent && task->parent->pid > 2))
 #endif  /*      #ifdef CONFIG_SCHED_HMP */
 
+/*******************************************************************************
+ * DEBUG Functions
+ ******************************************************************************/
+
+/* debug function for MT */
 #ifdef CONFIG_MT_SCHED_TRACE
 #ifdef CONFIG_MT_SCHED_DEBUG
 #define mt_sched_printf(event,x...) \
@@ -1268,6 +1273,7 @@ struct sched_avg {
 #else
 #define mt_sched_printf(event,x...) \
  do{                    \
+#ifdef CONFIG_DEBUG_SCHED_HMP_CODE
 	char strings[80] = "";  \
 	snprintf(strings, 80, x); \
 	trace_##event(strings); \
@@ -1277,6 +1283,73 @@ struct sched_avg {
 #else
 #define mt_sched_printf(event, x...) do {} while (0)
 #endif
+
+
+
+#ifdef CONFIG_DEBUG_SCHED_HMP
+
+/*
+ * commom debug information for hmp scheduler
+ * */
+#define hmp_debug(format, args...)      \
+                printk(format, ## args)
+
+#define hmp_dbginfo(format, args...)            \
+                printk(KERN_INFO "[%s, %d] : "format, __FILE__, __LINE__, ##args)
+
+/*
+ * function debug information for hmp scheduler
+ * */
+#ifdef CONFIG_DEBUG_SCHED_HMP_FUNC
+
+#define hmp_dbgfunc(format, args...)              \
+                    printk(KERN_DEBUG "[%s] : "format, __func__, __LINE__, ##args)
+
+#define FUNC_DEBUG_FLAG_START    1
+#define FUNC_DEBUG_FLAG_NOP      0
+#define FUNC_DEBUG_FLAG_END     -1
+
+
+#define hmp_func_debug(FLAG)                                    \
+        if (FLAG == FUNC_DEBUG_FLAG_START)                      \
+                hmp_dbgfunc(" funcrtion START...\n");     \
+        else if (FLAG == FUNC_DEBUG_FLAG_END)                                \
+                hmp_dbgfunc(" function END...\n");
+
+#else   /* CONFIG_DEBUG_SCHED_HMP_FUNCTION */
+
+#define hmp_func_debug(FLAG)    /* NOP */                                    \
+
+#endif  /* CONFIG_DEBUG_SCHED_HMP_FUNCTION */
+
+
+
+/*
+ * code logic information for hmp scheduler
+ * */
+#ifdef CONFIG_DEBUG_SCHED_HMP_CODE
+
+
+#define hmp_code_debug(format, args...)         \
+                hmp_dbginfo(format, args...)
+
+
+
+#else  /* CONFIG_DEBUG_SCHED_HMP_CODE */
+
+#define hmp_code_debug(format, args...) /* NOP */
+
+
+#endif  /* CONFIG_DEBUG_SCHED_HMP_CODE */
+
+
+#else /* CONFIG_DEBUG_SCHED_HMP */
+
+#define hmp_debug(format, args...)      /* NOP */
+
+#define hmp_dbginfo(format, args...)    /* NOP */
+
+#endif  /* CONFIG_DEBUG_SCHED_HMP */
 
 
 #ifdef CONFIG_SCHEDSTATS
