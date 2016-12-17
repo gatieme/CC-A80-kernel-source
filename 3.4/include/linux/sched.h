@@ -1273,7 +1273,6 @@ struct sched_avg {
 #else
 #define mt_sched_printf(event,x...) \
  do{                    \
-#ifdef CONFIG_DEBUG_SCHED_HMP_CODE
 	char strings[80] = "";  \
 	snprintf(strings, 80, x); \
 	trace_##event(strings); \
