@@ -20,7 +20,7 @@ menuconfig	:
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"开始调试, 修改内核..."
+GITHUB_COMMIT	:=	"修改Kconfig的配置方式, 为hmp和hmpcb增加了menu菜单..."
 
 github	:
 	git pull

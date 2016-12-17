@@ -48,3 +48,14 @@ loglevel=${logle}"
 
 然后boot, 但是内核并没有在引导的时候停止
 
+
+
+
+```cpp
+(gdb) set serial baud 38400
+(gdb) target remote /dev/ttyUSB0
+Remote debugging using /dev/ttyUS
+warning: unrecognized item "timeout" in "qSupported" response
+
+Ignoring packet error, continuing...
+```

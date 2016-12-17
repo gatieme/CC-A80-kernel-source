@@ -1945,7 +1945,8 @@ static inline void __update_tg_runnable_avg(struct sched_avg *sa,
 			  sa->runnable_avg_period + 1);
 	contrib -= cfs_rq->tg_runnable_contrib;
 
-	usage_contrib = div_u64(sa->usage_avg_sum << NICE_0_SHIFT, sa->runnable_avg_period + 1);
+	usage_contrib = div_u64(sa->usage_avg_sum << NICE_0_SHIFT, 
+							sa->runnable_avg_period + 1);
 	usage_contrib -= cfs_rq->tg_usage_contrib;
 
 	/*
@@ -2130,6 +2131,7 @@ int group_leader_is_empty(struct task_struct *p)
 
 	return 0;
 }
+
 
 static inline void update_tg_info(struct cfs_rq *cfs_rq, struct sched_entity *se, long ratio_delta)
 {
