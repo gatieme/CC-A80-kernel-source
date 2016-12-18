@@ -1,4 +1,4 @@
-menu "linaro mp schudeler"
+menu "Linaro p schudeler"
 
 #----------------------------------------------
 # linaro's configs for CONFIG_SCHED_HMP
@@ -108,10 +108,10 @@ config SCHED_HMP_LITTLE_PACKING
 
 
 
-endmenu #       "linaro mp schudeler"
+endmenu #       "Linaro mp schudeler"
 
 
-menu "linaro mp schudeler enhancement by HIT-FTCL"
+menu "big.LITTLE Hmp schudeler enhancement by HIT-FTCL"
 
 #----------------------------------------------
 # pack configs for CONFIG_SCHED_HMP
@@ -164,13 +164,11 @@ config HMP_PACK_STOP_MACHINE
           modify by gatieme(ChengJean) @ 2012-12-07 18:10 for support CONFIG_SCHED_HMP
 
 
+#menu "bit.LITTLE mpcb scheduler enhancement by HIT-FTCL"
 #----------------------------------------------
 # pack configs for CONFIG_SCHED_HMP_ENHANCEMENT
 #----------------------------------------------
 
-
-
-#menu "bit.LITTLE mpcb scheduler enhancement by HIT-FTCL"
 
 config SCHED_HMP_ENHANCEMENT
         bool "(EXPERIMENTAL-HMPCB) HMP Ennhancement"
@@ -241,14 +239,45 @@ config HMP_PACK_LB_ENV
 
 #endmenu #"bit.LITTLE mpcb scheduler enhancement by HIT-FTCL"
 
-endmenu #"linaro mp schudeler enhancement by HIT-FTCL"
+endmenu #"Linaro mp schudeler enhancement by HIT-FTCL"
 
+
+menu "Debug hmp scheduler"
+
+config DEBUG_SCHED_HMP
+        bool "Debug information for HMP scheduler"
+        depends on SCHED_HMP
+        help
+          If you say y here, you can use hmp_dgb and hmp_
+                hmp_debug(format, args...) used as printk
+
+                hmp_dbginfo(format, args...) used ad print file and line
+
+config DEBUG_SCHED_HMP_FUNC
+        bool "Debug the execution route of the all hmp function"
+        depends on SCHED_HMP
+        help
+          if you say y here, kernel will show your execution route of function
+                hmp_func_debug(FUNC_DEBUG_FLAG_START)
+
+                hmp_func_debug(FUNC_DEBUG_FLAG_END)
+
+
+
+config DEBUG_SCHED_HMP_CODE
+        bool "Logic information for the HMP scheduler"
+        depends on SCHED_HMP
+        help
+          if you sayy here, kernel will show your logic information of the HMP
+                hmp_code_debug
+
+endmenu #"Debug hmp scheduler"
 
 
 
 if ARCH_SUN8IW6
 
-menu "bit.LITTLE mp scheduler enhancement by SUNXI"
+menu "big.LITTLE mp scheduler enhancement by SUNXI"
 #----------------------------------------------
 # pack configs for SUNXI
 #----------------------------------------------
@@ -261,20 +290,20 @@ config SCHED_DCMP
           Allows the Dual cluster symmetric
 
 config SCHED_HMP_DCMP
-         bool "(EXPERIMENTAL) Heterogenous multiprocessor scheduling for DCMP"
-         depends on SCHED_HMP && SCHED_DCMP
-         help
-           Experimental scheduler optimizations for heterogeneous platforms for DCMP
+        bool "(EXPERIMENTAL) Heterogenous multiprocessor scheduling for DCMP"
+        depends on SCHED_HMP && SCHED_DCMP
+        help
+          Experimental scheduler optimizations for heterogeneous platforms for DCMP
 
 config SCHED_SMP_DCMP
-         bool "(EXPERIMENTAL) SMP scheduling for DCMP"
-         depends on !SCHED_HMP && SCHED_DCMP
-         help
-           Experimental SMP scheduling for DCMP
+        bool "(EXPERIMENTAL) SMP scheduling for DCMP"
+        depends on !SCHED_HMP && SCHED_DCMP
+        help
+          Experimental SMP scheduling for DCMP
 
 config CLUSTER0_CPU_MASK
         string "Cluster0 mask for Dual Cluster"
-         depends on SCHED_SMP_DCMP
+        depends on SCHED_SMP_DCMP
         help
           Leave empty to use device tree information. Specify
           the cpuids of the fast CPUs in the system as a list string, eg.
@@ -282,7 +311,7 @@ config CLUSTER0_CPU_MASK
 
 config CLUSTER1_CPU_MASK
         string "Cluster1 mask for Dual Cluster"
-         depends on SCHED_SMP_DCMP
+        depends on SCHED_SMP_DCMP
         help
           Leave empty to use device tree information.
           Specify the cpuids of the fast CPUs in the system as a list string,
@@ -292,10 +321,4 @@ endmenu #"bit.LITTLE mp scheduler enhancement by SUNXI"
 
 endif
 
-
-menu "Debug hmp scheduler"
-
-config 
-
-endmenu #"Debug hmp scheduler"
 

@@ -1301,8 +1301,36 @@ struct sched_avg {
  * */
 #ifdef CONFIG_DEBUG_SCHED_HMP_FUNC
 
+
+#ifdef CONFIG_DEBUG_SCHED_HMP_FUNC_ENHANCEMENT
+
+
+unsigned int space_number = 0;
+
+#define hmp_print_num_char(number, character)                 \
+        {                                               \
+                int num = 0;                            \
+                for(num = 0; num < number; num++)       \
+                {                                       \
+                        put(character);                 \
+                }                                       \
+        }
+
+#define hmp_print_num_space(number)          \
+                hmp_print_num_char(' ')
+
+
+#else   /* CONFIG_DEBUG_SCHED_HMP_FUNC_ENHANCEMENT */
+
+#define hmp_print_num_char(number, character)   /* NOP */
+
+#define hmp_print_num_space(number)             /* NOP */
+
+#endif  /* CONFIG_DEBUG_SCHED_HMP_FUNC_ENHANCEMENT */
+
+
 #define hmp_dbgfunc(format, args...)              \
-                    printk(KERN_DEBUG "[%s] : "format, __func__, __LINE__, ##args)
+                    printk(KERN_DEBUG "[%s, %d] : "format, __func__, __LINE__, ##args)
 
 #define FUNC_DEBUG_FLAG_START    1
 #define FUNC_DEBUG_FLAG_NOP      0
@@ -1311,13 +1339,15 @@ struct sched_avg {
 
 #define hmp_func_debug(FLAG)                                    \
         if (FLAG == FUNC_DEBUG_FLAG_START)                      \
-                hmp_dbgfunc(" funcrtion START...\n");     \
-        else if (FLAG == FUNC_DEBUG_FLAG_END)                                \
+                hmp_print_num_space(space_number++);            \
+                hmp_dbgfunc(" funcrtion START...\n");           \
+        else if (FLAG == FUNC_DEBUG_FLAG_END)                   \
+                hmp_print_num_space(space_number--);            \
                 hmp_dbgfunc(" function END...\n");
 
 #else   /* CONFIG_DEBUG_SCHED_HMP_FUNCTION */
 
-#define hmp_func_debug(FLAG)    /* NOP */                                    \
+#define hmp_func_debug(FLAG)    /* NOP */
 
 #endif  /* CONFIG_DEBUG_SCHED_HMP_FUNCTION */
 
