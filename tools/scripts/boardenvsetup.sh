@@ -52,9 +52,15 @@ cb_build_card_image()
 
 	(cd ${CB_OUTPUT_DIR}/card0-part2; tar -c * )|gzip -9 > ${CB_OUTPUT_DIR}/rootfs-part2.tar.gz
 #	cat  ${CB_TOOLS_DIR}/scripts/readme.txt
+        echo "==============================================="
         echo "NEXT SETP : part you sd-card..."
         echo "part card : cb_part_install_tfcard sdb pack"
         echo "part emmc : cb_part_install_flash_card sdb pack"
+        echo "-----------------------------------------------"
+        echo "NEXT SETP : build you image"
+        echo "crad boot : cb_install_tfcard sdb pack"
+        echo "emmc boot : cb_install_flash_card sdb pack"
+        echo "==============================================="
 
 }
 
@@ -163,7 +169,7 @@ cb_part_install_tfcard()
     	fi
 	fi
 	#cat  ${CB_TOOLS_DIR}/scripts/readme.txt
-        echo "NEXT SETP :"
+        echo "NEXT SETP : build your image"
         echo "crad boot : cb_install_tfcard sdb pack"
         echo "emmc boot : cb_install_flash_card sdb pack"
 }
@@ -256,9 +262,15 @@ cb_build_flash_card_image()
 	sudo umount ${CB_OUTPUT_DIR}/rootfs
 	rm ${CB_OUTPUT_DIR}/rootfs -fr
 #	cat  ${CB_TOOLS_DIR}/scripts/readme.txt
+        echo "==============================================="
         echo "NEXT SETP : part you sd-card..."
         echo "part card : cb_part_install_tfcard sdb pack"
         echo "part emmc : cb_part_install_flash_card sdb pack"
+        echo "-----------------------------------------------"
+        echo "NEXT SETP : build your image"
+        echo "crad boot : cb_install_tfcard sdb pack"
+        echo "emmc boot : cb_install_flash_card sdb pack"
+        echo "==============================================="
 }
 
 cb_part_install_flash_card()

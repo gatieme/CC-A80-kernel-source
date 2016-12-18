@@ -21,6 +21,7 @@
  */
 
 
+
 #include <linux/latencytop.h>
 #include <linux/sched.h>
 #include <linux/cpumask.h>
@@ -4308,7 +4309,7 @@ static inline unsigned long effective_load(struct task_group *tg, int cpu,
 	return wl;
 }
 
-#endif
+#endif /* CONFIG_FAIR_GROUP_SCHED */
 
 static int wake_affine(struct sched_domain *sd, struct task_struct *p, int sync)
 {
@@ -5147,11 +5148,12 @@ static int hmp_attr_init(void)
 	int ret;
 	memset(&hmp_data, sizeof(hmp_data), 0);
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
-
 	hmp_attr_add("init_task_load_period",
 		&init_task_load_period,
 		NULL,
-		NULL);
+		NULL,
+                NULL,
+                NULL);
 #endif
 	hmp_attr_add("hmp_domains",
 		NULL,
@@ -5169,7 +5171,7 @@ static int hmp_attr_init(void)
 		&hmp_down_threshold,
 		NULL,
 #ifdef CONFIG_SCHED_HMP_DCMP
-        NULL,
+                NULL,
 #else
 		hmp_theshold_from_sysfs,
 #endif
@@ -5337,8 +5339,9 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 	if (min_usage < (NICE_0_LOAD >> 1))
 #else
-	if (min_usage == 0) {
+	if (min_usage == 0)
 #endif
+        {
 		trace_sched_hmp_offload_abort(cpu, min_usage, "load");
 hmp_func_debug(FUNC_DEBUG_FLAG_END);
 		return NR_CPUS;
@@ -5346,10 +5349,11 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
 
 	/* Is the task alone on the cpu? */
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
-	if (cpu_rq(cpu)->cfs.nr_running < 2) {
+	if (cpu_rq(cpu)->cfs.nr_running < 2)
 #else
-	if (cpu_rq(cpu)->cfs.h_nr_running < 2) {
+	if (cpu_rq(cpu)->cfs.h_nr_running < 2)
 #endif
+        {
 		trace_sched_hmp_offload_abort(cpu,
 			cpu_rq(cpu)->cfs.h_nr_running, "nr_running");
 hmp_func_debug(FUNC_DEBUG_FLAG_END);
@@ -6828,7 +6832,8 @@ static int need_migrate_task_immediately(struct task_struct *p,
 
 	return 0;
 }
-#endif
+#endif  /* CONFIG_MTK_SCHED_CMP_TGS */
+
 /*
  * move_tasks tries to move up to load_move weighted load from busiest to
  * this_rq, as part of a balancing operation within domain "sd".
@@ -7155,7 +7160,7 @@ static int need_lazy_balance(int dst_cpu, int src_cpu, struct task_struct *p)
 	} else
 		return 0;
 }
-#endif
+#endif  /*      defined(CONFIG_MTK_SCHED_CMP_LAZY_BALANCE) && !defined(CONFIG_HMP_LAZY_BALANCE) */
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 /*
@@ -7278,7 +7283,7 @@ static unsigned long task_h_load(struct task_struct *p)
 {
 	return p->se.load.weight; /* p->se.avg.load_avg_contrib; */
 }
-#endif
+#endif  /*      CONFIG_FAIR_GROUP_SCHED */
 
 /********** Helpers for find_busiest_group ************************/
 /*
@@ -9184,7 +9189,7 @@ static int nohz_test_cpu(int cpu)
 	return 0;
 }
 #endif
-#endif
+#endif /* NO_HZ */
 
 static DEFINE_SPINLOCK(balancing);
 
@@ -9404,8 +9409,7 @@ need_kick:
 }
 #else
 static void nohz_idle_balance(int this_cpu, enum cpu_idle_type idle) { }
-#endif
-
+#endif  /* NO_HZ */
 
 #ifdef CONFIG_SCHED_HMP
 
@@ -9584,7 +9588,7 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
 
 
 
-#ifdef CONFIG_CPU_IDLE
+#ifdef CONFIG_CPU_IDLE && CONFIG_HMP_DELAY_UP_MIGRATION
 /*
  * hmp_idle_pull:
  *
@@ -9697,9 +9701,8 @@ static void hmp_cpu_keepalive_cancel(int cpu)
 {
 }
 
-#endif	/*	CONFIG_CPU_IDLE			*/
+#endif	/*	CONFIG_CPU_IDLE  && CONFIG_HMP_DELAY_UP_MIGRATION	*/
 
-#endif	/*	CONFIG_HMP_DELAY_UP_MIGRATION	*/
 
 #ifdef CONFIG_SCHED_HMP_ENHANCEMENT
 
@@ -10311,7 +10314,7 @@ u32 AVOID_FORCE_UP_MIGRATION_FROM_CPUX_TO_CPUY_COUNT[NR_CPUS][NR_CPUS];
 
 static void hmp_force_up_migration(int this_cpu)
 {
-hmp_func_debug(FUNC_DEBUG_FLAG_START);
+//hmp_func_debug(FUNC_DEBUG_FLAG_START);
 
         int curr_cpu, target_cpu;
         struct sched_entity *se;
@@ -10441,7 +10444,7 @@ out_force_up:
         trace_sched_hmp_load(clbenv.bstats.load_avg, clbenv.lstats.load_avg);
 #endif
         spin_unlock(&hmp_force_migration);
-hmp_func_debug(FUNC_DEBUG_FLAG_END);
+//hmp_func_debug(FUNC_DEBUG_FLAG_END);
 }
 
 
@@ -10994,6 +10997,8 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
 }
 
 
+
+#ifdef CONFIG_HMP_DELAY_UP_MIGRATION    /* && defined(CONFIG_SCHED_HMP) */
 /*
  * hmp_idle_pull looks at little domain runqueues to see
  * if a task should be pulled.
@@ -11083,6 +11088,8 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
         raw_spin_unlock_irqrestore(&target->lock, flags);
 
         if (force) {
+                /* start timer to keep us awake */
+                hmp_cpu_keepalive_trigger();                    /*  为大核设置保活监控定时器  */
 #ifdef CONFIG_HMP_PACK_STOP_MACHINE
                 if (stop_one_cpu_dispatch(cpu_of(target),
                         hmp_active_task_migration_cpu_stop,
@@ -11104,6 +11111,134 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
         return force;
 }
 
+#if 0
+static unsigned int hmp_task_eligible_for_up_migration(struct sched_entity *se)
+{
+        /* below hmp_up_threshold, never eligible */
+        if (se->avg.load_avg_ratio < hmp_up_threshold)
+                return 0;
+        return 1;
+}
+/*
+ * hmp_idle_pull looks at little domain runqueues to see
+ * if a task should be pulled.
+ *
+ * Reuses hmp_force_migration spinlock.
+ *
+ * modify by gatieme(ChengJean) for CONFIG_HMP_DELAY_UP_MIGRATION
+ */
+static unsigned int hmp_idle_pull(int this_cpu)
+{
+        int cpu;
+        struct sched_entity *curr, *orig;
+        struct hmp_domain *hmp_domain = NULL;
+        struct rq *target = NULL, *rq;
+        unsigned long flags, ratio = 0;
+        unsigned int force = 0;
+        struct task_struct *p = NULL;
+
+        if (!hmp_cpu_is_slowest(this_cpu))      /*  检查当前 CPU 是不是大核 */
+                hmp_domain = hmp_slower_domain(this_cpu);   /*  如果是大核(不是小核), 则取出小核的 domain 结构*/
+        if (!hmp_domain)
+                return 0;
+
+        if (!spin_trylock(&hmp_force_migration))    /*  加锁    */
+                return 0;
+
+        /* first select a task
+     * for循环遍历小核调度域上的所有 CPU, 找出该 CPU 的运行队列中负载最重的进程 curr    */
+        for_each_cpu(cpu, &hmp_domain->cpus) {
+                rq = cpu_rq(cpu);
+                raw_spin_lock_irqsave(&rq->lock, flags);
+                curr = rq->cfs.curr;
+                if (!curr) {
+                        raw_spin_unlock_irqrestore(&rq->lock, flags);
+                        continue;
+                }
+                if (!entity_is_task(curr)) {
+                        struct cfs_rq *cfs_rq;
+
+                        cfs_rq = group_cfs_rq(curr);
+                        while (cfs_rq) {
+                                curr = cfs_rq->curr;
+                                if (!entity_is_task(curr))
+                                        cfs_rq = group_cfs_rq(curr);
+                                else
+                                        cfs_rq = NULL;
+                        }
+                }
+                orig = curr;
+                curr = hmp_get_heaviest_task(curr, this_cpu);   /*  从当前CPU中找到负载最大(即最繁忙)的那个进程 */
+                /* check if heaviest eligible task on this
+                 * CPU is heavier than previous task
+                 */
+                if (curr && hmp_task_eligible_for_up_migration(curr) && /*  先判断这个负载重的进程是否合适迁移到大核 CPU 上(比较其负载是否大于阀值)   */
+                        curr->avg.load_avg_ratio > ratio &&
+                        cpumask_test_cpu(this_cpu,
+                                        tsk_cpus_allowed(task_of(curr)))) {
+                        p = task_of(curr);
+                        target = rq;
+                        ratio = curr->avg.load_avg_ratio;
+                }
+                raw_spin_unlock_irqrestore(&rq->lock, flags);
+        }
+
+        if (!p)
+                goto done;
+
+       /* now we have a candidate
+        * 迁移进程 migrate_task    :   是刚才找到的 p = task_of(curr) 进程
+        * 迁移源 CPU               :   迁移进程对应的 CPU
+        * 迁移目的地 CPU           :   当前 CPU, 当前 CPU 是大核调度域中的一个
+        * */
+        raw_spin_lock_irqsave(&target->lock, flags);
+        if (!target->active_balance && task_rq(p) == target) {
+                get_task_struct(p);
+                target->push_cpu = this_cpu;        /*  迁移的目的 CPU  */
+                target->migrate_task = p;           /*  待迁移的进程    */
+                trace_sched_hmp_migrate(p, target->push_cpu, HMP_MIGRATE_IDLE_PULL);
+                hmp_next_up_delay(&p->se, target->push_cpu);    /*  更新当前迁移的时间为 now    */
+                /*
+                 * if the task isn't running move it right away.
+                 * Otherwise setup the active_balance mechanic and let
+                 * the CPU stopper do its job.
+                 */
+                if (!task_running(target, p)) {                     /*  如果待迁移的进程不在运行    */
+                        trace_sched_hmp_migrate_idle_running(p, 0);
+                        hmp_migrate_runnable_task(target);              /*  直接对进程进行迁移          */
+                } else {
+                        target->active_balance = 1;
+                        force = 1;                                      /*  否则设置强制迁移标识 force 为 1 */
+                }
+        }
+        raw_spin_unlock_irqrestore(&target->lock, flags);
+
+        if (force) {
+                /* start timer to keep us awake */
+                hmp_cpu_keepalive_trigger();                    /*  为大核设置保活监控定时器  */
+#ifdef CONFIG_HMP_PACK_STOP_MACHINE
+                if (stop_one_cpu_dispatch(cpu_of(target),
+                        hmp_active_task_migration_cpu_stop,
+                        target, &target->active_balance_work)) {
+                        raw_spin_lock_irqsave(&target->lock, flags);
+                        target->active_balance = 0;
+                        force = 0;
+                        raw_spin_unlock_irqrestore(&target->lock, flags);
+                }
+#else
+                stop_one_cpu_nowait(cpu_of(target),             /*  如果迁移进程正在运行, 那么和之前一样, 调用 stop_one_cpu_nowait( ) 函数强行迁移  */
+                        hmp_active_task_migration_cpu_stop,
+                        target, &target->active_balance_work);
+#endif  /*      #ifdef CONFIG_HMP_PACK_STOP_MACHINE     */
+        }
+done:
+        spin_unlock(&hmp_force_migration);
+        return force;
+}
+#endif  /* #if 0*/
+
+#endif  /* CONFIG_HMP_DELAY_UP_MIGRATION */
+
 
 #endif  /*      CONFIG_SCHED_HMP_ENHANCEMENT    */
 
@@ -11117,7 +11252,6 @@ static void hmp_force_up_migration(int this_cpu) { }
  */
 static void run_rebalance_domains(struct softirq_action *h)
 {
-hmp_func_debug(FUNC_DEBUG_FLAG_START);
 	int this_cpu = smp_processor_id();
 	struct rq *this_rq = cpu_rq(this_cpu);
 	enum cpu_idle_type idle = this_rq->idle_balance ?
@@ -11130,7 +11264,6 @@ hmp_func_debug(FUNC_DEBUG_FLAG_START);
                 if (hmp_idle_pull(this_cpu)) {
                         /* break out unless running nohz idle as well */
                         if (idle != CPU_IDLE) {
-hmp_func_debug(FUNC_DEBUG_FLAG_END);
                                 return;
                         }
                 }
@@ -11147,7 +11280,6 @@ hmp_func_debug(FUNC_DEBUG_FLAG_END);
 	 * stopped.
 	 */
 	nohz_idle_balance(this_cpu, idle);
-hmp_func_debug(FUNC_DEBUG_FLAG_END);
 }
 
 static inline int on_null_domain(int cpu)

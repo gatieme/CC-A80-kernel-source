@@ -1285,20 +1285,36 @@ struct sched_avg {
 
 
 
-#ifdef CONFIG_DEBUG_SCHED_HMP
-
 /*
  * commom debug information for hmp scheduler
  * */
+#ifdef CONFIG_DEBUG_SCHED_HMP
+
 #define hmp_debug(format, args...)      \
                 printk(format, ## args)
 
 #define hmp_dbginfo(format, args...)            \
                 printk(KERN_INFO "[%s, %d] : "format, __FILE__, __LINE__, ##args)
 
+
+
+#else /* CONFIG_DEBUG_SCHED_HMP */
+
+#define hmp_debug(format, args...)      /* NOP */
+
+#define hmp_dbginfo(format, args...)    /* NOP */
+
+#endif  /* CONFIG_DEBUG_SCHED_HMP */
+
+
+
+
 /*
  * function debug information for hmp scheduler
  * */
+#define FUNC_DEBUG_FLAG_START    1
+#define FUNC_DEBUG_FLAG_NOP      0
+#define FUNC_DEBUG_FLAG_END     -1
 #ifdef CONFIG_DEBUG_SCHED_HMP_FUNC
 
 
@@ -1330,11 +1346,8 @@ unsigned int space_number = 0;
 
 
 #define hmp_dbgfunc(format, args...)              \
-                    printk(KERN_DEBUG "[%s, %d] : "format, __func__, __LINE__, ##args)
+                    printk(KERN_INFO "[%s, %d] : "format, __func__, __LINE__, ##args)
 
-#define FUNC_DEBUG_FLAG_START    1
-#define FUNC_DEBUG_FLAG_NOP      0
-#define FUNC_DEBUG_FLAG_END     -1
 
 
 #define hmp_func_debug(FLAG)                                    \
@@ -1346,6 +1359,7 @@ unsigned int space_number = 0;
                 else if (FLAG == FUNC_DEBUG_FLAG_END) {         \
                         hmp_print_num_space(space_number--);    \
                         hmp_dbgfunc(" function END...\n");      \
+                }                                               \
         }while (0)
 
 #else   /* CONFIG_DEBUG_SCHED_HMP_FUNCTION */
@@ -1374,14 +1388,6 @@ unsigned int space_number = 0;
 
 #endif  /* CONFIG_DEBUG_SCHED_HMP_CODE */
 
-
-#else /* CONFIG_DEBUG_SCHED_HMP */
-
-#define hmp_debug(format, args...)      /* NOP */
-
-#define hmp_dbginfo(format, args...)    /* NOP */
-
-#endif  /* CONFIG_DEBUG_SCHED_HMP */
 
 
 #ifdef CONFIG_SCHEDSTATS
