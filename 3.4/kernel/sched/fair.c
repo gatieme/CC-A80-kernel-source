@@ -21,8 +21,6 @@
  */
 
 
-//#define CONFIG_SCHED_HMP
-//#define CONFIG_SMP
 #include <linux/latencytop.h>
 #include <linux/sched.h>
 #include <linux/cpumask.h>
@@ -39,10 +37,12 @@
 #include <linux/stop_machine.h>
 #endif
 #include <trace/events/sched.h>
-//#ifdef CONFIG_HMP_VARIABLE_SCALE
+
+#ifdef CONFIG_HMP_SYSFS_INTERFACE
 #include <linux/sysfs.h>
 #include <linux/vmalloc.h>
-//#endif
+#endif
+
 #ifdef CONFIG_HMP_FREQUENCY_INVARIANT_SCALE
 /* Include cpufreq header to add a notifier so that cpu frequency
  * scaling can track the current CPU frequency
@@ -1555,7 +1555,9 @@ static u32 __compute_runnable_contrib(u64 n)
 	return contrib + runnable_avg_yN_sum[n];
 }
 
-#ifdef CONFIG_HMP_VARIABLE_SCALE /* CONFIG_SCHED_HMP */
+#ifdef CONFIG_SCHED_HMP
+
+#ifdef CONFIG_HMP_SYSFS_INTERFACE       /* && CONFIG_SCHED_HMP */
 
 #define HMP_VARIABLE_SCALE_SHIFT 16ULL
 struct hmp_global_attr {
@@ -1585,7 +1587,16 @@ struct hmp_data_struct {
 	struct hmp_global_attr attr[HMP_DATA_SYSFS_MAX];
 } hmp_data;
 
+
+
+
+
 static u64 hmp_variable_scale_convert(u64 delta);
+
+
+#endif  /* CONFIG_HMP_SYSFS_INTERFACE */
+
+
 #ifdef CONFIG_HMP_FREQUENCY_INVARIANT_SCALE
 /* Frequency-Invariant Load Modification:
  * Loads are calculated as in PJT's patch however we also scale the current
@@ -1644,8 +1655,10 @@ struct cpufreq_extents {
 #define SCHED_LOAD_FREQINVAR_SINGLEFREQ 0x01
 
 static struct cpufreq_extents freq_scale[CONFIG_NR_CPUS];
-#endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
-#endif /* CONFIG_HMP_VARIABLE_SCALE */
+#endif  /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
+
+#endif  /* CONFIG_SCHED_HMP */
+
 
 #ifdef CONFIG_MTK_SCHED_CMP  /* add by gatieme(ChengJean) for nothing */
 void get_cluster_cpus(struct cpumask *cpus, int cluster_id,
@@ -4958,7 +4971,7 @@ static inline void hmp_next_down_delay(struct sched_entity *se, int cpu)
 	cpu_rq(cpu)->avg.hmp_last_up_migration = 0;
 }
 
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#ifdef CONFIG_HMP_SYSFS_INTERFACE
 /*
  * Heterogenous multiprocessor (HMP) optimizations
  *
@@ -5180,7 +5193,8 @@ static int hmp_attr_init(void)
 		hmp_period_tofrom_sysfs,
 		NULL,
 		0);
-#endif
+#endif  /* CONFIG_HMP_VARIABLE_SCALE */
+
 #ifdef CONFIG_HMP_FREQUENCY_INVARIANT_SCALE
 	/* default frequency-invariant scaling ON */
 	hmp_data.freqinvar_load_scale_enabled = 1;
@@ -5212,7 +5226,8 @@ static int hmp_attr_init(void)
 	return 0;
 }
 late_initcall(hmp_attr_init);
-#endif /* CONFIG_HMP_VARIABLE_SCALE */
+#endif /* CONFIG_HMP_SYSFS_INTERFACE */
+
 /*
  * return the load of the lowest-loaded CPU in a given HMP domain
  * min_cpu optionally points to an int to receive the CPU.
@@ -11663,11 +11678,13 @@ __init void init_sched_fair_class(void)
 }
 
 #ifdef CONFIG_HMP_FREQUENCY_INVARIANT_SCALE
+
 static u32 cpufreq_calc_scale(u32 min, u32 max, u32 curr)
 {
 	u32 result = curr / max;
 	return result;
 }
+
 #ifdef CONFIG_HMP_POWER_AWARE_CONTROLLER
 DEFINE_PER_CPU(u32, FREQ_CPU);
 #endif /* CONFIG_HMP_POWER_AWARE_CONTROLLER */

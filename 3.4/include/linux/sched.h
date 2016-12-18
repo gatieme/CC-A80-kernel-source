@@ -1263,19 +1263,19 @@ struct sched_avg {
 /* debug function for MT */
 #ifdef CONFIG_MT_SCHED_TRACE
 #ifdef CONFIG_MT_SCHED_DEBUG
-#define mt_sched_printf(event,x...) \
- do{                    \
-	char strings[128] = "";  \
-	snprintf(strings, 128, x); \
-	pr_warn(x);          \
-	trace_##event(strings); \
+#define mt_sched_printf(event,x...)             \
+ do{                                            \
+	char strings[128] = "";                 \
+	snprintf(strings, 128, x);              \
+	pr_warn(x);                             \
+	trace_##event(strings);                 \
  }while (0)
 #else
-#define mt_sched_printf(event,x...) \
- do{                    \
-	char strings[80] = "";  \
-	snprintf(strings, 80, x); \
-	trace_##event(strings); \
+#define mt_sched_printf(event,x...)             \
+ do{                                            \
+	char strings[80] = "";                  \
+	snprintf(strings, 80, x);               \
+	trace_##event(strings);                 \
  }while (0)
 
 #endif
@@ -1307,7 +1307,7 @@ struct sched_avg {
 
 unsigned int space_number = 0;
 
-#define hmp_print_num_char(number, character)                 \
+#define hmp_print_num_char(number, character)           \
         {                                               \
                 int num = 0;                            \
                 for(num = 0; num < number; num++)       \
@@ -1316,7 +1316,7 @@ unsigned int space_number = 0;
                 }                                       \
         }
 
-#define hmp_print_num_space(number)          \
+#define hmp_print_num_space(number)                     \
                 hmp_print_num_char(' ')
 
 
@@ -1338,12 +1338,15 @@ unsigned int space_number = 0;
 
 
 #define hmp_func_debug(FLAG)                                    \
-        if (FLAG == FUNC_DEBUG_FLAG_START)                      \
-                hmp_print_num_space(space_number++);            \
-                hmp_dbgfunc(" funcrtion START...\n");           \
-        else if (FLAG == FUNC_DEBUG_FLAG_END)                   \
-                hmp_print_num_space(space_number--);            \
-                hmp_dbgfunc(" function END...\n");
+        do{                                                     \
+                if (FLAG == FUNC_DEBUG_FLAG_START) {            \
+                        hmp_print_num_space(space_number++);    \
+                        hmp_dbgfunc(" funcrtion START...\n");   \
+                }                                               \
+                else if (FLAG == FUNC_DEBUG_FLAG_END) {         \
+                        hmp_print_num_space(space_number--);    \
+                        hmp_dbgfunc(" function END...\n");      \
+        }while (0)
 
 #else   /* CONFIG_DEBUG_SCHED_HMP_FUNCTION */
 

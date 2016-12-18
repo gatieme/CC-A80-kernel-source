@@ -1,4 +1,4 @@
-menu "Linaro p schudeler"
+menu "Linaro mp schudeler"
 
 #----------------------------------------------
 # linaro's configs for CONFIG_SCHED_HMP
@@ -60,9 +60,37 @@ config HMP_SLOW_CPU_MASK
           Specify the cpuids of the slow CPUs in the system as a list string,
           eg. cpuid 0+1 should be specified as 0-1.
 
+
+config HMP_SYSFS_INTERFACE
+        bool "(LINARO-HMP) Allows get hmp information through sysfs"
+        depends on SCHED_HMP
+        help
+          These functions allow to change the growing speed of the load_avg_ratio
+          by default it goes from 0 to 0.5 in LOAD_AVG_PERIOD = 32ms
+          This can now be changed with /sys/kernel/hmp/load_avg_period_ms.
+
+          These functions also allow to change the up and down threshold of HMP
+          using /sys/kernel/hmp/{up,down}_threshold.
+          Both must be between 0 and 1023. The threshold that is compared
+          to the load_avg_ratio is up_threshold/1024 and down_threshold/1024.
+
+          For instance, if load_avg_period = 64 and up_threshold = 512, an idle
+          task with a load of 0 will reach the threshold after 64ms of busy loop.
+
+          Changing load_avg_periods_ms has the same effect than changing the
+          default scaling factor Y=1002/1024 in the load_avg_ratio computation to
+          (1002/1024.0)^(LOAD_AVG_PERIOD/load_avg_period_ms), but the last one
+          could trigger overflows.
+          For instance, with Y = 1023/1024 in __update_task_entity_contrib()
+          "contrib = se->avg.runnable_avg_sum * scale_load_down(se->load.weight);"
+          could be overflowed for a weight > 2^12 even is the load_avg_contrib
+          should still be a 32bits result. This would not happen by multiplicating
+          delta time by 1/22 and setting load_avg_period_ms = 706.
+
+
 config HMP_VARIABLE_SCALE
         bool "(LINARO-HMP) Allows changing the load tracking scale through sysfs"
-        depends on SCHED_HMP
+        depends on SCHED_HMP && HMP_SYSFS_INTERFACE
         help
           When turned on, this option exports the load average period value
           for the load tracking patches through sysfs.
@@ -78,6 +106,7 @@ config HMP_VARIABLE_SCALE
           average computation to
                         (1002/1024)^(LOAD_AVG_PERIOD/load_avg_period_ms)
           but removes intermediate overflows in computation.
+
 
 config HMP_FREQUENCY_INVARIANT_SCALE
         bool "(LINARO-HMP) Frequency-Invariant Tracked Load for HMP"
