@@ -1294,7 +1294,7 @@ struct sched_avg {
                 printk(format, ## args)
 
 #define hmp_dbginfo(format, args...)            \
-                printk(KERN_INFO "[%s, %d] : "format, __FILE__, __LINE__, ##args)
+                printk(KERN_INFO "[%s, %d] : "format, __func__, __LINE__, ##args)
 
 
 

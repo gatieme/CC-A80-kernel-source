@@ -567,11 +567,11 @@ asmlinkage void __init start_kernel(void)
 	 * we've done PCI setups etc, and console_init() must be aware of
 	 * this. But we do want output early, in case something goes wrong.
 	 */
-	console_init();
+	console_init( );
 	if (panic_later)
 		panic(panic_later, panic_param);
 
-	lockdep_info();
+	lockdep_info( );
 
 	/*
 	 * Need to run this when irqs are enabled, because it wants

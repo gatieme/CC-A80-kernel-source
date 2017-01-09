@@ -552,11 +552,11 @@ void __init arch_get_hmp_domains(struct list_head *hmp_domains_list)
 #endif
 	struct hmp_domain *domain;
 
-    /*  首先 arch_get_fast_and_slow_cpus( ) 去获取系统中大小核 CPU 的 index.
-     *  这里分别为大小核定义了 domain,
-     *  把小核的 CPUs 放到小核的 domain 上,大核 CPUs 放到大核 domain 上,
-     *  然后加入到全局链表 hmp_domains_list.
-     *  */
+        /*  首先 arch_get_fast_and_slow_cpus( ) 去获取系统中大小核 CPU 的 index.
+        *  这里分别为大小核定义了 domain,
+        *  把小核的 CPUs 放到小核的 domain 上,大核 CPUs 放到大核 domain 上,
+        *  然后加入到全局链表 hmp_domains_list.
+        *  */
 	arch_get_fast_and_slow_cpus(&hmp_fast_cpu_mask, &hmp_slow_cpu_mask);
 
 	/*
@@ -576,6 +576,16 @@ void __init arch_get_hmp_domains(struct list_head *hmp_domains_list)
 	cpumask_copy(&domain->possible_cpus, &hmp_fast_cpu_mask);
 	cpumask_and(&domain->cpus, cpu_online_mask, &domain->possible_cpus);
 	list_add(&domain->hmp_domains, hmp_domains_list);
+
+
+#ifdef CONFIG_DEBUG_SCHED_HMP
+        printk(KERN_INFO "**************[%s]**************\n", __func__);
+        list_for_each_entry(domain, hmp_domains_list, hmp_domains){
+                printk(KERN_INFO "[%s, %p] HMP_DOMAIN====\n", __func__, domain);
+        printk(KERN_INFO "**************[%s]**************\n", __func__);
+        }
+#endif  /* CONFIG_DEBUG_SCHED_HMP */
+
 }
 #endif /* CONFIG_SCHED_HMP */
 
@@ -604,7 +614,7 @@ void __init init_cpu_topology(void)
 #endif
 	}
 	smp_wmb();
-#ifdef CONFIG_OF  
+#ifdef CONFIG_OF
 	/* add by gatieme for cpupower */
 	parse_dt_topology();
 #endif

@@ -44,6 +44,12 @@ setenv setargs_cubie "setenv bootargs console=${console} \
 kgdboc=${kgdboc} \
 root=${mmc_root} \
 loglevel=${logle}"
+
+
+setenv setargs_cubie "setenv bootargs console=${console} \
+rootfs=ext4		\
+root=${mmc_root} \
+loglevel=${logle}"
 ```
 
 然后boot, 但是内核并没有在引导的时候停止

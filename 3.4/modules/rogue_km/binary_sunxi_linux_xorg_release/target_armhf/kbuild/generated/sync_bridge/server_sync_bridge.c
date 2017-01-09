@@ -1,1 +1,0 @@
-/home/gatieme/Work/Arm/Kernel/3.4/GitHub/3.4/modules/rogue_km/generated/sync_bridge/server_sync_bridge.c

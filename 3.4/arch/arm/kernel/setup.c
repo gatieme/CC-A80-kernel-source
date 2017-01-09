@@ -1093,9 +1093,10 @@ void __init setup_arch(char **cmdline_p)
 	if (is_smp()) {
 		if (!mdesc->smp_init || !mdesc->smp_init())
 			smp_set_ops(mdesc->smp);
+                printk(KERN_INFO "[%s, %d]\n", __func__, __LINE__);
 		smp_init_cpus();        /* add by gatieme for debug */
 		smp_build_mpidr_hash();
-        printk(KERN_INFO "[%s, %d]\n", __func__, __LINE__);
+                printk(KERN_INFO "[%s, %d]\n", __func__, __LINE__);
 	}
 #endif
 	reserve_crashkernel();

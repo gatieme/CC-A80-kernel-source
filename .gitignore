@@ -10,7 +10,6 @@
 # Normal rules
 #
 
-vmlinux
 .*
 *.o
 *.o.*
@@ -43,19 +42,19 @@ resume1.code
 #
 # Top-level generic files
 #
-/tags
-/TAGS
-/linux
-/vmlinux
-/vmlinuz
-/System.map
-/Module.markers
-/Module.symvers
+/3.4/tags
+/3.4/TAGS
+/3.4/linux
+/3.4/vmlinux
+/3.4/vmlinuz
+/3.4/System.map
+/3.4/Module.markers
+/3.4/Module.symvers
 
 #
 # Debian directory (make deb-pkg)
 #
-/debian/
+/3.4/debian/
 
 #
 # git files that we don't want to ignore even it they are dot-files
@@ -66,17 +65,17 @@ resume1.code
 #
 # Generated include files
 #
-include/config
-include/linux/version.h
-include/generated
-arch/*/include/generated
+/3.4/include/config
+/3.4/include/linux/version.h
+/3.4/include/generated
+/3.4/arch/*/include/generated
 
 # stgit generated dirs
-patches-*
+/3.4/patches-*
 
 # quilt's files
-patches
-series
+/3.4/patches
+/3.4/series
 
 # cscope files
 cscope.*
@@ -95,7 +94,8 @@ GTAGS
 # lichee ingnore files
 skel/
 output/
+build/
 bImage
 *.swp
-rootfs.cpio.gz
-drivers/arisc/binary/arisc
+/3.4/rootfs.cpio.gz
+/3.4/drivers/arisc/binary/arisc
