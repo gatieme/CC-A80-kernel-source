@@ -145,11 +145,17 @@ menu "big.LITTLE Hmp schudeler enhancement by HIT-FTCL"
 #----------------------------------------------
 # pack configs for CONFIG_SCHED_HMP
 #----------------------------------------------
-config HMP_TRACER
-        bool "(EXPERIMENTAL-HMP) Profile HMP scheduler"
+config HMP_PROC_TASK_INTERFACE
+        bool "(EXPERIMENTAL-HMP) Profile HMP scheduler for PROC"
         depends on SCHED_HMP
         help
-          Profile HMP scheduler
+          Profile HMP scheduler for "/proc/pid/sched"
+
+config HMP_TRACER
+        bool "(EXPERIMENTAL-HMP) Tracer HMP scheduler"
+        depends on SCHED_HMP
+        help
+          Profile HMP scheduler tracer
 
 config HEVTASK_INTERFACE
         bool "(EXPERIMENTAL-HMP)task status interface"

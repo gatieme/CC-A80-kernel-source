@@ -20,7 +20,7 @@ menuconfig	:
 .PHONY	: github
 
 
-GITHUB_COMMIT	:=	"修改Kconfig的配置方式, 增加了调试信息宏, 增加Kconfig中的调试信息..."
+GITHUB_COMMIT	:=	"[kernel/sched/debug.c]--为/proc/pid/sched添加了sched_avg的信息..."
 
 github	:
 	git pull
