@@ -38,7 +38,7 @@ Module.markers
 *.gcno
 standby.code
 resume1.code
-
+*.img
 #
 # Top-level generic files
 #
