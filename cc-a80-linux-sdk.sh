@@ -12,3 +12,5 @@ git clone https://github.com/cubieboard/CC-A80-rootfs.git       rootfs
 
 #Sdk guide :/Model/CC-A80/Doc/lubuntu
 
+
+#接法 : 白色接TX, 绿色接RX, 黑色接GND, 注意红色不接, 为防止误插可以剪掉
