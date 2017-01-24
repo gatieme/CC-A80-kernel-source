@@ -198,6 +198,7 @@ cb_install_tfcard()
 	sudo umount ${CB_OUTPUT_DIR}/part1
 	sudo mount /dev/${sd_dev}2 ${CB_OUTPUT_DIR}/part2
 	sudo tar -C ${CB_OUTPUT_DIR}/part2 --strip-components=1 -zxpf ${CB_ROOTFS_IMAGE}
+        echo "====extar ${CB_ROOTFS_IMAGE}===="
 	sync
 	sudo tar -C ${CB_OUTPUT_DIR}/part2 -zxpf ${CB_OUTPUT_DIR}/rootfs-part2.tar.gz
 	sync

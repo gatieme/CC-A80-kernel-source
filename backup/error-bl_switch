@@ -1,0 +1,175 @@
+drivers/staging/built-in.o: In function `switch_dev_unregister':
+/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/staging/android/switch/switch_class.c:151: multiple definition of `switch_dev_unregister'
+drivers/switch/built-in.o:/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/switch/switch_class.c:151: first defined here
+drivers/staging/built-in.o: In function `switch_dev_register':
+/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/staging/android/switch/switch_class.c:114: multiple definition of `switch_dev_register'
+drivers/switch/built-in.o:/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/switch/switch_class.c:114: first defined here
+drivers/staging/built-in.o: In function `switch_set_state':
+/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/staging/android/switch/switch_class.c:61: multiple definition of `switch_set_state'
+drivers/switch/built-in.o:/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/switch/switch_class.c:61: first defined here
+drivers/staging/built-in.o: In function `iio_device_unregister':
+/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/staging/iio/industrialio-core.c:918: multiple definition of `switch_class'
+drivers/switch/built-in.o:/home/gatieme/Work/Arm/Kernel/3.4/CC-A80-kernel-source/drivers/switch/switch_class.c:151: first defined here
+
+
+
+#
+ERROR: "sync_fence_wait" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sync_fence_fdget" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sync_fence_install" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sw_sync_pt_create" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sw_sync_timeline_create" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sync_fence_put" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sync_fence_create" [drivers/video/sunxi/disp/disp.ko] undefined!
+ERROR: "sw_sync_timeline_inc" [drivers/video/sunxi/disp/disp.ko] undefined!
+
+
+cp: cannot stat ‘drivers/char/arisc_test/arisc_test.ko’: No such file or directory
+ INSTALL drivers/hwmon/bma250.ko
+    INSTALL drivers/hwmon/kionix_tiny.ko
+      INSTALL drivers/hwmon/lis3de_acc.ko
+        INSTALL drivers/hwmon/lis3dh_acc.ko
+          INSTALL drivers/hwmon/mma7660.ko
+            INSTALL drivers/hwmon/mma8452.ko
+              INSTALL drivers/hwmon/mma865x.ko
+                INSTALL drivers/input/keyboard/sunxi-ir-rx.ko
+                  INSTALL drivers/input/keyboard/sunxi-ir-tx.ko
+                    INSTALL drivers/input/misc/fxos8700.ko
+                    cp: cannot stat ‘drivers/input/keyboard/sunxi-ir-rx.ko’: No such file or directory
+                      INSTALL drivers/input/misc/jsa1127.ko
+                      cp: cannot stat ‘drivers/input/keyboard/sunxi-ir-tx.ko’: No such file or directory
+
+
+#iks
+[ OK ]ctivating swap...                                                                                
+ * Will now halt                                                                                       
+ [  120.211517] Unable to handle kernel NULL pointer dereference at virtual address 00000018            
+ [  120.221018] pgd = ed27c000                                                                          
+ [  120.224166] [00000018] *pgd=00000000                                                                
+ [  120.228373] Internal error: Oops: 5 [#1] PREEMPT SMP ARM                                            
+ [  120.234538] Modules linked in: pvrsrvkm(O) dc_drmfbdev(O) sunxi_ir_rx sunxi_gmac nfsd               
+ [  120.243735] CPU: 2    Tainted: G           O  (3.4.39 #2)                                           
+ [  120.250012] PC is at workqueue_cpu_callback.isra.21+0x1c8/0x21c                                     
+ [  120.256889] LR is at workqueue_cpu_callback.isra.21+0x1c0/0x21c                                     
+ [  120.263761] pc : [<c07ccf58>]    lr : [<c07ccf50>]    psr: 600f0013                                 
+ [  120.263768] sp : ed8cbcd8  ip : ed8cbcd8  fp : ed8cbd04                                             
+ [  120.277089] r10: 00000000  r9 : 00000000  r8 : 200f0013                                             
+ [  120.283147] r7 : 00000000  r6 : 00000004  r5 : 00000001  r4 : c204f580                              
+ [  120.290714] r3 : 00000000  r2 : 00000000  r1 : 00000001  r0 : c204f580                              
+ [  120.298292] Flags: nZCv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment user                       
+ [  120.306571] Control: 10c5387d  Table: 4d27c06a  DAC: 00000015                                       
+ [  120.313236]                                                                                         
+ [  120.313240] PC: 0xc07cced8:                                                                         
+ [  120.318202] ced8  0584a194 0a000028 e7f001f2 e5943014 e3833004 e5843014 ea000023 e3a03002           
+ [  120.327859] cef8  e5843180 e5940194 ebe21c71 ea00001c e5943014 e3c33004 e5843014 e5943180           
+ [  120.337509] cf18  e3530004 0a000009 e3a03003 e594017c e5843180 ebe281ce e5943180 e3530004           
+ [  120.347156] cf38  0a000002 e1a00004 e3a01004 eb0018aa e1a00004 eb0050c0 e5943194 e1a01005           
+ [  120.356810] cf58  e5930018 ebe23acf e1a00004 eb005240 e5943014 e5940194 e3833001 e5843014           
+ [  120.366467] cf78  ebe21c42 e3a03000 e5843194 e1a00004 e1a01008 eb00509a e3a00001 ea000000           
+ [  120.376113] cf98  e3080002 e24bd024 e89dadf0 c07d2ce4 c0a82c4e e1a0c00d e92dd800 e24cb004           
+ [  120.385767] cfb8  e3c13010 e3530006 e1a00001 8a000006 e3a01001 e1a03311 e313005c 0a000002           
+ [  120.395419]                                                                                         
+ [  120.395423] LR: 0xc07cced0:                                                                         
+ [  120.400385] ced0  e5943194 e3530000 0584a194 0a000028 e7f001f2 e5943014 e3833004 e5843014           
+ [  120.410041] cef0  ea000023 e3a03002 e5843180 e5940194 ebe21c71 ea00001c e5943014 e3c33004           
+ [  120.419683] cf10  e5843014 e5943180 e3530004 0a000009 e3a03003 e594017c e5843180 ebe281ce           
+ [  120.429335] cf30  e5943180 e3530004 0a000002 e1a00004 e3a01004 eb0018aa e1a00004 eb0050c0           
+ [  120.438989] cf50  e5943194 e1a01005 e5930018 ebe23acf e1a00004 eb005240 e5943014 e5940194           
+ [  120.448639] cf70  e3833001 e5843014 ebe21c42 e3a03000 e5843194 e1a00004 e1a01008 eb00509a           
+ [  120.458295] cf90  e3a00001 ea000000 e3080002 e24bd024 e89dadf0 c07d2ce4 c0a82c4e e1a0c00d           
+ [  120.467950] cfb0  e92dd800 e24cb004 e3c13010 e3530006 e1a00001 8a000006 e3a01001 e1a03311           
+ [  120.477611]                                                                                         
+ [  120.477615] SP: 0xed8cbc58:                                                                         
+ [  120.482579] bc58  c006e9f8 c07df050 c0054da8 00000000 00000001 00000000 c07ccf58 600f0013           
+ [  120.492237] bc78  ffffffff ed8cbcc4 ed8cbd04 ed8cbc90 c000fa58 c000a1b4 c204f580 00000001           
+ [  120.501875] bc98  00000000 00000000 c204f580 00000001 00000004 00000000 200f0013 00000000           
+ [  120.518347] bcb8  00000000 ed8cbd04 ed8cbcd8 ed8cbcd8 c07ccf50 c07ccf58 600f0013 ffffffff           
+ [  120.534863] bcd8  c07d3808 c0077770 00000006 00000000 00000021 c0da148c 00000001 00000000           
+ [  120.551490] bcf8  ed8cbd14 ed8cbd08 c07ccfe0 c07ccd9c ed8cbd3c ed8cbd18 c006186c c07ccfb8           
+ [  120.568137] bd18  00000026 00000006 00000000 c0c86a4c ffffffff 00000001 ed8cbd54 ed8cbd40           
+ [  120.584796] bd38  c00618f8 c0061830 00000000 00000002 ed8cbd74 ed8cbd58 c003ce1c c00618e0           
+ [  120.601502]                                                                                         
+ [  120.601505] IP: 0xed8cbc58:                                                                         
+ [  120.620700] bc58  c006e9f8 c07df050 c0054da8 00000000 00000001 00000000 c07ccf58 600f0013           
+ [  120.637366] bc78  ffffffff ed8cbcc4 ed8cbd04 ed8cbc90 c000fa58 c000a1b4 c204f580 00000001           
+ [  120.653933] bc98  00000000 00000000 c204f580 00000001 00000004 00000000 200f0013 00000000           
+ [  120.670584] bcb8  00000000 ed8cbd04 ed8cbcd8 ed8cbcd8 c07ccf50 c07ccf58 600f0013 ffffffff           
+ [  120.687267] bcd8  c07d3808 c0077770 00000006 00000000 00000021 c0da148c 00000001 00000000           
+ [  120.703917] bcf8  ed8cbd14 ed8cbd08 c07ccfe0 c07ccd9c ed8cbd3c ed8cbd18 c006186c c07ccfb8           
+ [  120.720568] bd18  00000026 00000006 00000000 c0c86a4c ffffffff 00000001 ed8cbd54 ed8cbd40           
+ [  120.737268] bd38  c00618f8 c0061830 00000000 00000002 ed8cbd74 ed8cbd58 c003ce1c c00618e0           
+ [  120.754092]                                                                                         
+ [  120.754096] FP: 0xed8cbc84:                                                                         
+ [  120.773392] bc84  ed8cbc90 c000fa58 c000a1b4 c204f580 00000001 00000000 00000000 c204f580           
+ [  120.790269] bca4  00000001 00000004 00000000 200f0013 00000000 00000000 ed8cbd04 ed8cbcd8           
+ [  120.807184] bcc4  ed8cbcd8 c07ccf50 c07ccf58 600f0013 ffffffff c07d3808 c0077770 00000006           
+ [  120.824233] bce4  00000000 00000021 c0da148c 00000001 00000000 ed8cbd14 ed8cbd08 c07ccfe0           
+ [  120.841301] bd04  c07ccd9c ed8cbd3c ed8cbd18 c006186c c07ccfb8 00000026 00000006 00000000           
+ [  120.858361] bd24  c0c86a4c ffffffff 00000001 ed8cbd54 ed8cbd40 c00618f8 c0061830 00000000           
+ [  120.875443] bd44  00000002 ed8cbd74 ed8cbd58 c003ce1c c00618e0 00000000 00000001 00000000           
+ [  120.892639] bd64  00000001 ed8cbdbc ed8cbd78 c07cb97c c003cdec 00000004 00000000 00000000           
+ [  120.909709]                                                                                         
+ [  120.909712] R0: 0xc204f500:                                                                         
+ [  120.929512] f500  00000000 00000000 ef0460c0 00000000 c204f50c 00000000 c204f514 c204f51c           
+ [  120.946588] f520  c204f51c c204f524 c204f524 c204f52c c204f52c c204f534 c204f534 c204f53c           
+ [  120.963650] f540  c204f53c c204f544 c204f544 c204f54c c204f54c c204f554 c204f554 c204f55c           
+ [  120.980618] f560  c204f55c c204f564 c204f564 ef0c0000 00000000 00000000 00000000 00000000           
+ [  120.997554] f580  00000000 00000000 c204f588 c204f588 00000001 00000000 00000002 00000002           
+ [  121.014420] f5a0  ef396d40 ef02b900 00000000 00000000 00000000 00000000 00000000 00000000           
+ [  121.031239] f5c0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000           
+ [  121.048030] f5e0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000           
+ [  121.064666]                                                                                         
+ [  121.064670] R4: 0xc204f500:                                                                         
+ [  121.083534] f500  00000000 00000000 ef0460c0 00000000 c204f50c 00000000 c204f514 c204f51c           
+ [  121.100146] f520  c204f51c c204f524 c204f524 c204f52c c204f52c c204f534 c204f534 c204f53c           
+ [  121.116756] f540  c204f53c c204f544 c204f544 c204f54c c204f54c c204f554 c204f554 c204f55c           
+ [  121.133259] f560  c204f55c c204f564 c204f564 ef0c0000 00000000 00000000 00000000 00000000           
+ [  121.149745] f580  00000000 00000000 c204f588 c204f588 00000001 00000000 00000002 00000002           
+ [  121.166166] f5a0  ef396d40 ef02b900 00000000 00000000 00000000 00000000 00000000 00000000           
+ [  121.182496] f5c0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000           
+ [  121.198837] f5e0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000           
+ [  121.214997] Process halt (pid: 2873, stack limit = 0xed8ca2f8)                                      
+ [  121.228324] Stack: (0xed8cbcd8 to 0xed8cc000)                                                       
+ [  121.239904] bcc0:                                                       c07d3808 c0077770           
+ [  121.255895] bce0: 00000006 00000000 00000021 c0da148c 00000001 00000000 ed8cbd14 ed8cbd08           
+ [  121.271915] bd00: c07ccfe0 c07ccd9c ed8cbd3c ed8cbd18 c006186c c07ccfb8 00000026 00000006           
+ [  121.287935] bd20: 00000000 c0c86a4c ffffffff 00000001 ed8cbd54 ed8cbd40 c00618f8 c0061830           
+ [  121.303936] bd40: 00000000 00000002 ed8cbd74 ed8cbd58 c003ce1c c00618e0 00000000 00000001           
+ [  121.319937] bd60: 00000000 00000001 ed8cbdbc ed8cbd78 c07cb97c c003cdec 00000004 00000000           
+ [  121.335805] bd80: 00000000 00000001 00000026 ffffffff c0c9b7a8 00000001 c0c86a4c 00000001           
+ [  121.351748] bda0: c0c9b7a8 00000000 ed8ca000 00000000 ed8cbdd4 ed8cbdc0 c07cbb30 c07cb8dc           
+ [  121.367654] bdc0: 00000008 c0c86aa8 ed8cbdf4 ed8cbdd8 c054b79c c07cbb04 c054b758 00000003           
+ [  121.383579] bde0: 00000000 ffffffff ed8cbe1c ed8cbdf8 c006186c c054b764 ffffffff c0c9555c           
+ [  121.399458] be00: ffffffff 00000000 00000003 c0010168 ed8cbe44 ed8cbe20 c0061a28 c0061830           
+ [  121.415361] be20: 00000000 ed8cbe30 00000003 4321fedc c0c94e5c 00000003 ed8cbe5c ed8cbe48           
+ [  121.431260] be40: c0061a68 c00619dc 00000000 c0332668 ed8cbe74 ed8cbe60 c00502e8 c0061a4c           
+ [  121.447146] be60: 4321fedc 00000000 ed8cbe84 ed8cbe78 c0050324 c00502c4 ed8cbfa4 ed8cbe88           
+ [  121.463037] be80: c0050ba8 c0050314 00000000 ee67807c ee9b9a40 c2051940 ee9b9db0 c2051940           
+ [  121.478939] bea0: 600b0013 c0c87460 ed8cbecc ed8cbeb8 c006a9bc c006a690 ee9b9a40 c006d638           
+ [  121.494819] bec0: ed8cbefc ed8cbed0 c006d638 c07e1208 00000001 ee9b9a40 00000000 00000007           
+ [  121.510806] bee0: c0c9267c b6fa59f8 ed8cbfb0 00000000 00000000 b6fecf30 ed8cbfac ed8cbf08           
+ [  121.526767] bf00: c000a294 c001c768 edb76444 edb76440 ed8cbf2c ed8cbf20 c07e184c c037f1dc           
+ [  121.542761] bf20: ed8cbf4c ed8cbf30 c037f1dc c07e1788 c0c9c988 edb76400 ed924c00 edb76440           
+ [  121.558768] bf40: ed8cbf5c c0123bc0 c0c9c988 c0123bc8 ed8cbf84 ed8cbf60 c0123bc8 c07e11b4           
+ [  121.574742] bf60: ed8cbf8c 00000000 b6fee248 00000024 c0010168 00000000 ed8cbfa4 ed8cbf88           
+ [  121.590690] bf80: c014a824 c0123b08 00000002 00000000 b6fee248 00000058 00000000 ed8cbfa8           
+ [  121.606630] bfa0: c000ff00 c0050a84 00000002 00000000 fee1dead 28121969 4321fedc 00000003           
+ [  121.622553] bfc0: 00000002 00000000 b6fee248 00000058 00000000 00000000 b6fecf30 00000000           
+ [  121.638556] bfe0: 00000058 bedb9cbc b6f4151d b6ec98e6 200f0030 fee1dead 00000000 00000000           
+ [  121.654503] [<c07ccf58>] (workqueue_cpu_callback.isra.21+0x1c8/0x21c) from [<c07ccfe0>] (workqueue_)
+ [  121.674307] [<c07ccfe0>] (workqueue_cpu_up_callback+0x34/0x40) from [<c006186c>] (notifier_call_cha)
+ [  121.692846] [<c006186c>] (notifier_call_chain+0x48/0x78) from [<c00618f8>] (__raw_notifier_call_cha)
+ [  121.711447] [<c00618f8>] (__raw_notifier_call_chain+0x24/0x2c) from [<c003ce1c>] (__cpu_notify+0x3c)
+ [  121.729505] [<c003ce1c>] (__cpu_notify+0x3c/0x58) from [<c07cb97c>] (_cpu_down+0xac/0x228)          
+ [  121.746127] [<c07cb97c>] (_cpu_down+0xac/0x228) from [<c07cbb30>] (cpu_down+0x38/0x4c)              
+ [  121.762442] [<c07cbb30>] (cpu_down+0x38/0x4c) from [<c054b79c>] (reboot_notifier_call+0x44/0x94)    
+ [  121.779844] [<c054b79c>] (reboot_notifier_call+0x44/0x94) from [<c006186c>] (notifier_call_chain+0x)
+ [  121.798526] [<c006186c>] (notifier_call_chain+0x48/0x78) from [<c0061a28>] (__blocking_notifier_cal)
+ [  121.818446] [<c0061a28>] (__blocking_notifier_call_chain+0x58/0x70) from [<c0061a68>] (blocking_not)
+ [  121.847385] [<c0061a68>] (blocking_notifier_call_chain+0x28/0x30) from [<c00502e8>] (kernel_shutdow)
+ [  121.867943] [<c00502e8>] (kernel_shutdown_prepare+0x30/0x50) from [<c0050324>] (kernel_power_off+0x)
+ [  121.887415] [<c0050324>] (kernel_power_off+0x1c/0x58) from [<c0050ba8>] (sys_reboot+0x130/0x1e8)    
+ [  121.905927] [<c0050ba8>] (sys_reboot+0x130/0x1e8) from [<c000ff00>] (ret_fast_syscall+0x0/0x30)     
+ [  121.924394] Code: e1a00004 eb0050c0 e5943194 e1a01005 (e5930018)                                    
+ [  121.940163] ---[ end trace d38a9d5c7878b0cd ]---                                                    
+ Segmentation fault         
