@@ -28,6 +28,14 @@ config CPU_IDLE_GOV_LADDER
 config CPU_IDLE_GOV_MENU
 	bool "Menu governor (for tickless system)"
 	default y
+
+
+#add by gatieme START
+config CPU_IDLE_GOV_MENU
+	bool "HMP-Menu governor (for tickless system)"
+	default y
+#add by gatoe,e END
+
 menu "ARM CPU Idle Drivers"
 depends on ARM
 source "drivers/cpuidle/Kconfig.arm"

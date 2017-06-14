@@ -206,68 +206,82 @@ config HMP_PACK_STOP_MACHINE
 
 
 config SCHED_HMP_ENHANCEMENT
-        bool "(EXPERIMENTAL-HMPCB) HMP Ennhancement"
+        bool "(EXPERIMENTAL-HMPDB) Heterogeneous Multi-Processor Dynamics Balance"
         depends on SCHED_HMP
         help
           HMP Ennhancement
 
 config MET_SCHED_HMP
-        bool "(EXPERIMENTAL-HMPCB) MET SCHED HMP Info"
+        bool "(EXPERIMENTAL-HMPDB) MET SCHED HMP Info"
         depends on SCHED_HMP_ENHANCEMENT && HMP_TRACER && SCHED_DEBUG
         help
           MET SCHED HMP Info
 
 config HMP_DYNAMIC_THRESHOLD
-        bool "(EXPERIMENTAL-HMPCB) Dynamically adjust task migration threshold"
+        bool "(EXPERIMENTAL-HMPDB) Dynamically adjust task migration threshold"
         depends on SCHED_HMP_ENHANCEMENT
         help
           Dynamically adjust task migration threshold according to current system load
 
 config HMP_GLOBAL_BALANCE
-        bool "(EXPERIMENTAL-HMPCB) Enhance HMP global load balance"
+        bool "(EXPERIMENTAL-HMPDB) Enhance HMP global load balance"
         depends on SCHED_HMP_ENHANCEMENT
         help
           Enhance HMP global load balance
 
 config HMP_TASK_ASSIGNMENT
-        bool "(EXPERIMENTAL-HMPCB) Enhance HMP task assignment"
+        bool "(EXPERIMENTAL-HMPDB) Enhance HMP task assignment"
         depends on SCHED_HMP_ENHANCEMENT
         help
           Enhance HMP task assignment
 
 config HMP_DISCARD_CFS_SELECTION_RESULT
-        bool "(EXPERIMENTAL-HMPCB) Discard CFS runqueue selection result"
+        bool "(EXPERIMENTAL-HMPDB) Discard CFS runqueue selection result"
         depends on SCHED_HMP_ENHANCEMENT && HMP_TASK_ASSIGNMENT
         help
           Discard CFS runqueue selection result even if only one cluster exists
 
 config HMP_PACK_SMALL_TASK
-        bool "(EXPERIMENTAL-HMPCB) Packing Small Tasks"
+        bool "(EXPERIMENTAL-HMPDB) Packing Small Tasks"
         depends on SCHED_HMP_ENHANCEMENT && !SCHED_HMP_LITTLE_PACKING
         help
           This option enables Packing Small Tasks
 
+config HMP_DELAY_UP_MIGRATION
+        bool "(EXPERIMENTAL-HMPDB) Delay migration task"
+        depends on SCHED_HMP_ENHANCEMENT
+        help
+          In this version we have stopped using forced up migrations when we
+          detect that a task running on a little CPU should be moved to a bigger
+          CPU. In most cases, the bigger CPU is in a deep sleep state and a forced
+          migration means we stop the task immediately but need to wait for the
+          target CPU to wake up before we can restart the task which is being
+          moved. Instead, we now wake a big CPU with an IPI and ask it to pull
+          a task when ready. This allows the task to continue executing on its
+          current CPU, reducing the amount of time that the task is stalled for.
+
+
 config HMP_PACK_BUDDY_INFO
-        bool "(EXPERIMENTAL-HMPCB) Packing Small Tasks Buddy Information Log"
+        bool "(EXPERIMENTAL-HMPDB) Packing Small Tasks Buddy Information Log"
         depends on SCHED_HMP_ENHANCEMENT && HMP_PACK_SMALL_TASK
         help
           This option enables Packing Small Tasks Buddy Information Log
 
 
 config HMP_LAZY_BALANCE
-        bool "(EXPERIMENTAL-HMPCB) Lazy Balance"
+        bool "(EXPERIMENTAL-HMPDB) Lazy Balance"
         depends on SCHED_HMP_ENHANCEMENT && HMP_PACK_SMALL_TASK
         help
           This option enables Lazy Balance
 
 config HMP_POWER_AWARE_CONTROLLER
-        bool "(EXPERIMENTAL-HMPCB) Power-aware Scheduler for b.L MP Controller"
+        bool "(EXPERIMENTAL-HMPDB) Power-aware Scheduler for b.L MP Controller"
         depends on SCHED_HMP_ENHANCEMENT && HMP_PACK_SMALL_TASK && HMP_LAZY_BALANCE
         help
           Power-aware scheduler for b.L MP controller and status interface
 
 config HMP_PACK_LB_ENV
-                bool "(EXPERIMENTAL-HMPCB) LB environment enhancement for B.L MP Cobtroller"
+                bool "(EXPERIMENTAL-HMPDB) LB environment enhancement for B.L MP Cobtroller"
         depends on SCHED_HMP_ENHANCEMENT
         help
           lb_env enhancement for b.L MP controller

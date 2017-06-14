@@ -124,6 +124,15 @@ config CPU_FREQ_DEFAULT_GOV_FANTASYS
          governor. If unsure have a look at the help section of the
          driver. Fallback governor will be the performance governor.
 
+# Add by gatieme START                                                           
+config CPU_FREQ_DEFAULT_GOV_SCHED                                                
+       bool "HMP-Sched"                                                             
+       select CPU_FREQ_GOV_SCHED                                                    
+       help                                                                         
+         Use the CPUfreq governor 'sched' as default. This scales                   
+         cpu frequency using CPU utilization estimates from the                     
+#Add bygatieme END                                                                                                        
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -276,6 +285,19 @@ config CPU_FREQ_GOV_IKS
          module will be called cpufreq_iks.
 
          If in doubt, say N.
+
+# Add by gatieme START                                                           
+config CPU_FREQ_GOV_SCHED                                                                                                  
+       bool "'HMP-Sched' cpufreq governor"                                          
+       depends on CPU_FREQ                                                          
+       depends on SMP                                                               
+       select CPU_FREQ_GOV_COMMON                                                   
+       help                                                                         
+         'sched' - this governor scales cpu frequency from the                      
+         scheduler as a function of cpu capacity utilization. It does               
+         not evaluate utilization on a periodic basis (as ondemand                  
+         does) but instead is event-driven by the scheduler.                        
+# Add by gatieme END 
 
 config CPU_FREQ_INPUT_EVNT_NOTIFY
        bool "CPU frequency input event notify"
